@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { addGame, getActiveGames } from '../firebase/games';
+import { addGameIfNotExists, getActiveGames } from '../firebase/games';
 import { Game } from '../types';
 
 export const useGames = () => {
@@ -92,6 +92,49 @@ export const useGames = () => {
       color: 'pink',
       isActive: true
     }
+    ,
+    {
+      name: 'Sudoku',
+      nameAr: 'سودوكو',
+      description: 'Fill the 9x9 grid so each row, column and 3x3 box contains 1-9.',
+      descriptionAr: 'املأ الشبكة 9×9 بحيث تحتوي كل صف وعمود ومربع 3×3 على الأرقام 1-9.',
+      category: 'logic',
+      xpReward: 35,
+      difficulty: 'hard',
+      playTime: '10-20 min',
+      players: 1,
+      icon: '🧮',
+      color: 'orange',
+      isActive: true
+    },
+    {
+      name: 'Chess',
+      nameAr: 'شطرنج',
+      description: 'Challenge a strategic AI opponent in this futuristic 3D chess game with cyber aesthetics!',
+      descriptionAr: 'تحدى منافس ذكاء اصطناعي استراتيجي في لعبة شطرنج ثلاثية الأبعاد مستقبلية!',
+      category: 'logic',
+      xpReward: 40,
+      difficulty: 'hard',
+      playTime: '10-20 min',
+      players: 1,
+      icon: '♟️',
+      color: 'indigo',
+      isActive: true
+    },
+    {
+      name: 'Tic Tac Toe',
+      nameAr: 'تيك تاك تو',
+      description: 'Play the classic Tic Tac Toe game against a smart computer opponent.',
+      descriptionAr: 'العب لعبة تيك تاك تو الكلاسيكية ضد منافس كمبيوتر ذكي.',
+      category: 'logic',
+      xpReward: 20,
+      difficulty: 'easy',
+      playTime: '3-5 min',
+      players: 1,
+      icon: '⭕',
+      color: 'blue',
+      isActive: true
+    }
   ];
 
   const loadGames = async () => {
@@ -100,7 +143,7 @@ export const useGames = () => {
       setError(null);
       
       const fetchedGames = await getActiveGames();
-      
+
       // If no games exist in Firestore, seed with default games
       if (fetchedGames.length === 0) {
         console.log('No games found in Firestore, seeding default games...');
@@ -108,16 +151,36 @@ export const useGames = () => {
         
         for (const gameData of defaultGames) {
           try {
-            const gameId = await addGame(gameData);
+            const gameId = await addGameIfNotExists(gameData);
             seededGames.push({ id: gameId, ...gameData });
           } catch (seedError) {
             console.error('Error seeding game:', seedError);
           }
         }
         
-        setGames(seededGames);
+        // Ensure no duplicates by name
+        const uniqueSeeded = dedupeByName(seededGames);
+        setGames(uniqueSeeded);
       } else {
-        setGames(fetchedGames);
+        // If games exist, ensure any new defaults (e.g., newly added games) are present
+        const existingNames = new Set(
+          fetchedGames.map(g => g.name.trim().toLowerCase())
+        );
+        const missingDefaults = defaultGames.filter(d => !existingNames.has(d.name.trim().toLowerCase()));
+
+        const newlyAdded: Game[] = [];
+        for (const gameData of missingDefaults) {
+          try {
+            const gameId = await addGameIfNotExists(gameData);
+            newlyAdded.push({ id: gameId, ...gameData });
+          } catch (seedError) {
+            console.error('Error adding missing default game:', seedError);
+          }
+        }
+
+        // Ensure no duplicates by name if the collection already has duplicates
+        const uniqueCombined = dedupeByName([...fetchedGames, ...newlyAdded]);
+        setGames(uniqueCombined);
       }
     } catch (err) {
       console.error('Error loading games:', err);
@@ -135,9 +198,10 @@ export const useGames = () => {
 
   const addNewGame = async (gameData: Omit<Game, 'id'>) => {
     try {
-      const gameId = await addGame(gameData);
+      // Prevent duplicates by name
+      const gameId = await addGameIfNotExists(gameData);
       const newGame = { id: gameId, ...gameData };
-      setGames(prev => [...prev, newGame]);
+      setGames(prev => dedupeByName([...prev, newGame]));
       return newGame;
     } catch (err) {
       console.error('Error adding game:', err);
@@ -167,4 +231,15 @@ export const useGames = () => {
     getGamesByCategory,
     getGameById
   };
+};
+
+// Helpers
+const dedupeByName = (list: Game[]) => {
+  const seen = new Set<string>();
+  return list.filter((game) => {
+    const key = game.name.trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 };

@@ -59,10 +59,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate }) => {
   };
 
   const handleShare = async () => {
-    const success = await share(post.id, 'direct');
+    const success = await share(post.id);
     if (success) {
-      // Could show a success message here
-      console.log('Post shared successfully');
+      // Refresh the main posts list if available
+      if (onPostUpdate) {
+        onPostUpdate();
+      }
+      
+      // Emit a custom event to refresh shared posts in profile
+      window.dispatchEvent(new CustomEvent('refreshSharedPosts'));
     }
   };
 

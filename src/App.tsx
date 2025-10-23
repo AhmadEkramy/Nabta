@@ -15,6 +15,15 @@ import CircleDetailsPage from './pages/CircleDetailsPage';
 import FocusModesPage from './pages/FocusModesPage';
 import GamesPage from './pages/GamesPage';
 import GrowthCirclesPage from './pages/GrowthCirclesPage';
+import ActivityTracker from './pages/health/ActivityTracker';
+import BloodPressureTracker from './pages/health/BloodPressureTracker';
+import BloodSugarTracker from './pages/health/BloodSugarTracker';
+import HeartRateTracker from './pages/health/HeartRateTracker';
+import NutritionTracker from './pages/health/NutritionTracker';
+import SleepTracker from './pages/health/SleepTracker';
+import StepsTracker from './pages/health/StepsTracker';
+import WaterTracker from './pages/health/WaterTracker';
+import HealthTracker from './pages/HealthTracker';
 import HomePage from './pages/HomePage';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -25,7 +34,9 @@ import QuranPage from './pages/QuranPage';
 import SettingsPage from './pages/SettingsPage';
 import SignupPage from './pages/SignupPage';
 import StorePage from './pages/StorePage';
+import TermsPage from './pages/TermsPage';
 import TodoListPage from './pages/TodoListPage';
+import ContributionsPage from './pages/ContributionsPage';
 
 function App() {
   return (
@@ -41,6 +52,8 @@ function App() {
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/terms" element={<TermsPage />} />
+                  <Route path="/contributions" element={<ContributionsPage />} />
                   <Route path="/home" element={
                     <ProtectedRoute>
                       <Layout>
@@ -66,6 +79,69 @@ function App() {
                     <ProtectedRoute>
                       <Layout>
                         <ChatPage />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/health" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <HealthTracker />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/health/nutrition" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <NutritionTracker />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/health/water" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <WaterTracker />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/health/activity" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <ActivityTracker />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/health/sleep" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <SleepTracker />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/health/steps" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <StepsTracker />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/health/heart-rate" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <HeartRateTracker />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/health/blood-sugar" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <BloodSugarTracker />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/health/blood-pressure" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <BloodPressureTracker />
                       </Layout>
                     </ProtectedRoute>
                   } />

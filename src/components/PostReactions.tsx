@@ -236,8 +236,8 @@ const PostReactions: React.FC<PostReactionsProps> = ({
       )}
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-1">
+      <div className="flex items-center justify-center sm:justify-start">
+        <div className="flex items-center space-x-1 max-[400px]:scale-[0.80] max-[400px]:origin-center">
           {/* Reaction Button with Picker */}
           <div className="relative" ref={reactionButtonRef}>
             <motion.button

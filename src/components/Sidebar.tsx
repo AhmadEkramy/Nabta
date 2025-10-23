@@ -1,4 +1,5 @@
 import {
+  Activity,
   BookOpen,
   Bot,
   CheckSquare,
@@ -27,6 +28,7 @@ const Sidebar: React.FC = () => {
     { to: '/home', icon: Home, label: t('nav.home') },
     { to: '/circles', icon: Users, label: t('nav.circles') },
     { to: '/chat', icon: MessageCircle, label: language === 'ar' ? 'المحادثات' : 'Chat' },
+    { to: '/health', icon: Activity, label: language === 'ar' ? 'متتبع الصحة' : 'Health Tracker' },
     { to: '/todos', icon: CheckSquare, label: language === 'ar' ? 'قائمة المهام' : 'To Do List' },
     { to: '/focus', icon: Target, label: t('nav.focus') },
     { to: '/coach', icon: Bot, label: t('nav.coach') },

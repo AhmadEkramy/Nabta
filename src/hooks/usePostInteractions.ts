@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import {
     addPostComment,
@@ -6,11 +6,11 @@ import {
     deletePost,
     getPostComments,
     getPostStats,
-    sharePost,
     toggleCommentLike,
     togglePostLike,
     updatePost,
 } from '../firebase/postInteractions';
+import { sharePost, unsharePost } from '../firebase/sharedPosts';
 
 // Hook for post likes
 export const usePostLike = (postId: string, initialLiked: boolean = false, initialCount: number = 0) => {
@@ -40,12 +40,23 @@ export const usePostLike = (postId: string, initialLiked: boolean = false, initi
 // Hook for post comments
 export const usePostComments = (postId: string) => {
   const { user } = useAuth();
-  const [comments, setComments] = useState<any[]>([]);
+  interface Comment {
+    id: string;
+    postId: string;
+    userId: string;
+    userName: string;
+    userAvatar: string;
+    content: string;
+    createdAt: string | { seconds: number; nanoseconds: number };
+    likes: number;
+    likedBy: string[];
+  }
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addingComment, setAddingComment] = useState(false);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       setLoading(true);
       const postComments = await getPostComments(postId);
@@ -57,7 +68,7 @@ export const usePostComments = (postId: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId]);
 
   const addComment = async (content: string) => {
     if (!user || !content.trim()) return false;
@@ -106,7 +117,7 @@ export const usePostComments = (postId: string) => {
 
   useEffect(() => {
     fetchComments();
-  }, [postId]);
+  }, [postId, fetchComments]);
 
   return {
     comments,
@@ -150,14 +161,14 @@ export const usePostShare = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const share = async (postId: string, shareType: 'direct' | 'story' | 'external' = 'direct') => {
+  const share = async (postId: string) => {
     if (!user) return false;
 
     try {
       setLoading(true);
       setError(null);
-      await sharePost(postId, user.id, user.name, user.avatar, shareType);
-      return true;
+      const result = await sharePost(postId, user.id);
+      return result;
     } catch (err) {
       console.error('Error sharing post:', err);
       setError('Failed to share post');
@@ -167,7 +178,24 @@ export const usePostShare = () => {
     }
   };
 
-  return { share, loading, error };
+  const unshare = async (postId: string) => {
+    if (!user) return false;
+
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await unsharePost(postId, user.id);
+      return result;
+    } catch (err) {
+      console.error('Error unsharing post:', err);
+      setError('Failed to unshare post');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { share, unshare, loading, error };
 };
 
 // Hook for post stats
@@ -175,7 +203,7 @@ export const usePostStats = (postId: string) => {
   const [stats, setStats] = useState({ likes: 0, comments: 0, shares: 0, likedBy: [] });
   const [loading, setLoading] = useState(true);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       setLoading(true);
       const postStats = await getPostStats(postId);
@@ -185,11 +213,11 @@ export const usePostStats = (postId: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId]);
 
   useEffect(() => {
     fetchStats();
-  }, [postId]);
+  }, [fetchStats]);
 
   return { stats, loading, refreshStats: fetchStats };
 };
@@ -223,7 +251,8 @@ export const usePostManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      await deletePost(postId, user.id);
+      // Pass user's admin status to allow admins to delete any post
+      await deletePost(postId, user.id, user.isAdmin || false);
       return true;
     } catch (err) {
       console.error('Error deleting post:', err);

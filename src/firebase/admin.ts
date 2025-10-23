@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { Post, User } from '../types';
 import { db } from './config';
+import { deletePost as deletePostWithRelations } from './postInteractions';
 
 // Admin Statistics
 export interface AdminStats {
@@ -361,6 +362,18 @@ export const deleteCircle = async (circleId: string): Promise<void> => {
     await deleteDoc(doc(db, 'circles', circleId));
   } catch (error) {
     console.error('Error deleting circle:', error);
+    throw error;
+  }
+};
+
+// Delete post (admin action)
+export const deletePost = async (postId: string, userId: string = ''): Promise<void> => {
+  try {
+    // Use the deletePost function from postInteractions which handles all related data
+    // Pass isAdmin=true to bypass authorization check
+    await deletePostWithRelations(postId, userId, true);
+  } catch (error) {
+    console.error('Error deleting post:', error);
     throw error;
   }
 };

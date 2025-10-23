@@ -70,6 +70,7 @@ export interface Post {
   circleName?: string;
   createdAt: string;
   updatedAt?: string;
+  sharedAt?: string;  // Added for shared posts
   likes: number;
   comments: number;
   shares: number;
@@ -265,6 +266,32 @@ export interface VerseDisplayInfo {
     overallPercentage: number;
     juzPercentage: number;
     surahPercentage: number;
+  };
+}
+
+export interface ExtendedUserType extends Omit<User, 'circles'> {
+  // Weekly progress
+  weeklyProgress?: {
+    [key: string]: {
+      tasks: number;
+      tasksCount: number;
+      focusHours: number;
+    };
+  };
+  circles: string[];  // Keep the original circles array from User
+  circleDetails?: Array<{
+    id: string;
+    name: string;
+  }>;
+  interests?: string[];
+  totalPosts?: number;
+  sharedPosts?: number;
+  skills?: string[];
+  socialLinks?: {
+    twitter?: string;
+    linkedin?: string;
+    github?: string;
+    website?: string;
   };
 }
 

@@ -4,8 +4,12 @@ import React, { useState } from 'react';
 import LogicPuzzleGame from '../components/games/LogicPuzzleGame';
 import MathQuizGame from '../components/games/MathQuizGame';
 import MemoryCardGame from '../components/games/MemoryCardGame';
+import PatternMemoryGame from '../components/games/PatternMemoryGame';
 import VocabularyGame from '../components/games/VocabularyGame';
 import WordScrambleGame from '../components/games/WordScrambleGame';
+import SudokuGame from '../components/games/SudokuGame';
+import ChessGame from '../components/games/ChessGame';
+import TicTacToeGame from '../components/games/TicTacToeGame';
 import { useGame } from '../contexts/GameContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useGameStats } from '../hooks/useGameStats';
@@ -410,6 +414,30 @@ const GamesPage: React.FC = () => {
           )}
           {activeGame.name === 'Vocabulary Builder' && (
             <VocabularyGame
+              onGameComplete={handleGameComplete}
+              onClose={closeGame}
+            />
+          )}
+          {activeGame.name === 'Pattern Memory' && (
+            <PatternMemoryGame
+              onGameComplete={handleGameComplete}
+              onClose={closeGame}
+            />
+          )}
+          {activeGame.name === 'Sudoku' && (
+            <SudokuGame
+              onGameComplete={handleGameComplete}
+              onClose={closeGame}
+            />
+          )}
+          {activeGame.name === 'Chess' && (
+            <ChessGame
+              onGameComplete={handleGameComplete}
+              onClose={closeGame}
+            />
+          )}
+          {activeGame.name === 'Tic Tac Toe' && (
+            <TicTacToeGame
               onGameComplete={handleGameComplete}
               onClose={closeGame}
             />

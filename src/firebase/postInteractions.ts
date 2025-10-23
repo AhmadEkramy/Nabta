@@ -328,8 +328,8 @@ export const updatePost = async (postId: string, userId: string, newContent: str
   }
 };
 
-// Delete a post (only by post author)
-export const deletePost = async (postId: string, userId: string) => {
+// Delete a post (only by post author or admin)
+export const deletePost = async (postId: string, userId: string, isAdmin: boolean = false) => {
   try {
     const postRef = doc(db, 'posts', postId);
     const postDoc = await getDoc(postRef);
@@ -340,8 +340,8 @@ export const deletePost = async (postId: string, userId: string) => {
     
     const postData = postDoc.data();
     
-    // Check if user can delete (only post author)
-    if (postData.userId !== userId) {
+    // Check if user can delete (post author or admin)
+    if (!isAdmin && postData.userId !== userId) {
       throw new Error('Not authorized to delete this post');
     }
     
@@ -385,12 +385,15 @@ export const deletePost = async (postId: string, userId: string) => {
     // Finally delete the post
     await deleteDoc(postRef);
     
-    // Update user's post count
+    // Update user's post count (for the post author, not the admin)
     try {
-      const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, {
-        postsCount: increment(-1),
-      });
+      const postAuthorId = postData.userId;
+      if (postAuthorId) {
+        const userRef = doc(db, 'users', postAuthorId);
+        await updateDoc(userRef, {
+          postsCount: increment(-1),
+        });
+      }
     } catch (userUpdateError) {
       console.warn('Could not update user post count:', userUpdateError);
     }

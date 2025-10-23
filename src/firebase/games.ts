@@ -13,6 +13,17 @@ export const addGame = async (game: Omit<Game, 'id'>) => {
   return docRef.id;
 };
 
+// Add a new game only if a game with the same name doesn't already exist
+export const addGameIfNotExists = async (game: Omit<Game, 'id'>) => {
+  const existingQ = query(collection(db, 'games'), where('name', '==', game.name));
+  const existingSnap = await getDocs(existingQ);
+  if (!existingSnap.empty) {
+    // Return the first existing id to keep callers happy
+    return existingSnap.docs[0].id;
+  }
+  return addGame(game);
+};
+
 // Get all games
 export const getGames = async () => {
   const q = query(collection(db, 'games'));

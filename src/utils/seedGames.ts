@@ -1,4 +1,4 @@
-import { addGame } from '../firebase/games';
+import { addGameIfNotExists } from '../firebase/games';
 import { Game } from '../types';
 
 const defaultGames: Omit<Game, 'id'>[] = [
@@ -86,6 +86,49 @@ const defaultGames: Omit<Game, 'id'>[] = [
     color: 'pink',
     isActive: true
   }
+  ,
+  {
+    name: 'Sudoku',
+    nameAr: 'سودوكو',
+    description: 'Fill the 9x9 grid so each row, column and 3x3 box contains 1-9.',
+    descriptionAr: 'املأ الشبكة 9×9 بحيث تحتوي كل صف وعمود ومربع 3×3 على الأرقام 1-9.',
+    category: 'logic',
+    xpReward: 35,
+    difficulty: 'hard',
+    playTime: '10-20 min',
+    players: 1,
+    icon: '🧮',
+    color: 'orange',
+    isActive: true
+  },
+  {
+    name: 'Chess',
+    nameAr: 'شطرنج',
+    description: 'Challenge a strategic AI opponent in this futuristic 3D chess game with cyber aesthetics!',
+    descriptionAr: 'تحدى منافس ذكاء اصطناعي استراتيجي في لعبة شطرنج ثلاثية الأبعاد مستقبلية!',
+    category: 'logic',
+    xpReward: 40,
+    difficulty: 'hard',
+    playTime: '10-20 min',
+    players: 1,
+    icon: '♟️',
+    color: 'indigo',
+    isActive: true
+  },
+  {
+    name: 'Tic Tac Toe',
+    nameAr: 'تيك تاك تو',
+    description: 'Play the classic Tic Tac Toe game against a smart computer opponent.',
+    descriptionAr: 'العب لعبة تيك تاك تو الكلاسيكية ضد منافس كمبيوتر ذكي.',
+    category: 'logic',
+    xpReward: 20,
+    difficulty: 'easy',
+    playTime: '3-5 min',
+    players: 1,
+    icon: '⭕',
+    color: 'blue',
+    isActive: true
+  }
 ];
 
 export const seedGamesData = async () => {
@@ -95,7 +138,7 @@ export const seedGamesData = async () => {
     
     for (const gameData of defaultGames) {
       try {
-        const gameId = await addGame(gameData);
+        const gameId = await addGameIfNotExists(gameData);
         seededGames.push({ id: gameId, ...gameData });
         console.log(`Seeded game: ${gameData.name}`);
       } catch (error) {

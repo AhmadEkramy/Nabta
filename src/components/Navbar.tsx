@@ -33,13 +33,12 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <Link to="/home" className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl">دن</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
-                {language === 'ar' ? 'دوائر النمو' : 'Growth Circles'}
-              </span>
+            <Link to="/home" className="flex items-center">
+              <img 
+                src="/logo.png" 
+                alt="Growth Circles Logo" 
+                className="h-16 w-auto"
+              />
             </Link>
           </div>
 
@@ -62,23 +61,30 @@ const Navbar: React.FC = () => {
             <div className="hidden md:flex items-center space-x-4 rtl:space-x-reverse">
               {user && (
                 <div className="flex items-center space-x-4 rtl:space-x-reverse">
-                  <div className="flex items-center space-x-2 rtl:space-x-reverse bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-full">
-                    <span className="text-sm font-medium">
-                      {t('level')} {user.level}
-                    </span>
-                    <span className="text-xs opacity-90">
-                      {getLevelTitle(user.level)}
-                    </span>
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-                  </div>
+                  <div className="flex items-center gap-3 rtl:space-x-reverse">
+                    {/* Level Badge */}
+                    <div className="flex items-center space-x-1 rtl:space-x-reverse bg-[#1bc46d] bg-opacity-10 text-[#1bc46d] px-4 py-2 rounded-full">
+                      <span className="text-sm font-medium">
+                        {t('level')} {user.level}
+                      </span>
+                      <span className="text-xs">
+                        {getLevelTitle(user.level)}
+                      </span>
+                      <span className="text-xs">•</span>
+                    </div>
 
-                  <div className="flex items-center space-x-2 rtl:space-x-reverse bg-blue-500 text-white px-3 py-1 rounded-full">
-                    <span className="text-sm font-medium">{user.xp} {t('xp')}</span>
-                  </div>
+                    {/* XP Badge */}
+                    <div className="flex items-center space-x-1 rtl:space-x-reverse bg-[#4c8bf5] bg-opacity-10 text-[#4c8bf5] px-4 py-2 rounded-full">
+                      <span className="text-sm font-medium">{user.xp}</span>
+                      <span className="text-sm">XP</span>
+                    </div>
 
-                  <div className="flex items-center space-x-2 rtl:space-x-reverse bg-orange-500 text-white px-3 py-1 rounded-full">
-                    <span className="text-sm font-medium">{user.streak} {t('streak')}</span>
-                    <span className="text-xs">🔥</span>
+                    {/* Streak Badge */}
+                    <div className="flex items-center space-x-1 rtl:space-x-reverse bg-[#ff6b21] bg-opacity-10 text-[#ff6b21] px-4 py-2 rounded-full">
+                      <span className="text-sm font-medium">{user.streak}</span>
+                      <span className="text-sm">{t('streak')}</span>
+                      <span className="text-sm">🔥</span>
+                    </div>
                   </div>
                 </div>
               )}

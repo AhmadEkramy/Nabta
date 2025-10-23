@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import ConfirmDeletePostModal from '../components/admin/ConfirmDeletePostModal';
 import CreateCircleModal from '../components/admin/CreateCircleModal';
 import DeleteCircleModal from '../components/admin/DeleteCircleModal';
 import DeleteUserModal from '../components/admin/DeleteUserModal';
@@ -21,6 +22,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import {
     AdminStats,
     CircleWithStats,
+    deletePost,
     getAdminStats,
     getAllCircles,
     getAllUsers,
@@ -64,6 +66,10 @@ const AdminDashboard: React.FC = () => {
   const [deleteCircleModal, setDeleteCircleModal] = useState<{ isOpen: boolean; circle: CircleWithStats | null }>({
     isOpen: false,
     circle: null
+  });
+  const [deletePostModal, setDeletePostModal] = useState<{ isOpen: boolean; post: Post | null }>({
+    isOpen: false,
+    post: null
   });
 
   // Load all admin data
@@ -188,11 +194,39 @@ const AdminDashboard: React.FC = () => {
     setCreateCircleModal(false);
     setEditCircleModal({ isOpen: false, circle: null });
     setDeleteCircleModal({ isOpen: false, circle: null });
+    setDeletePostModal({ isOpen: false, post: null });
   };
 
   const handleDataUpdated = () => {
     loadAdminData();
     closeModals();
+  };
+
+  // Delete post function - open modal
+  const handleDeletePostClick = (post: Post) => {
+    setDeletePostModal({ isOpen: true, post });
+  };
+
+  // Confirm delete post
+  const confirmDeletePost = async () => {
+    if (!deletePostModal.post) return;
+
+    try {
+      await deletePost(deletePostModal.post.id);
+      await loadAdminData(); // Refresh data
+      toast.success(
+        language === 'ar' 
+          ? 'تم حذف المنشور بنجاح' 
+          : 'Post deleted successfully'
+      );
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast.error(
+        language === 'ar' 
+          ? 'فشل في حذف المنشور' 
+          : 'Failed to delete post'
+      );
+    }
   };
 
   // Format date for display
@@ -686,20 +720,29 @@ const AdminDashboard: React.FC = () => {
                         </p>
                       ) : (
                         recentPosts.slice(0, 5).map(post => (
-                          <div key={post.id} className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                          <div key={post.id} className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 group">
                             <img
                               src={post.user?.avatar || post.userAvatar || ''}
                               alt={post.user?.name || post.userName || 'User'}
                               className="w-8 h-8 rounded-full"
                             />
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center space-x-2">
-                                <span className="font-medium text-gray-900 dark:text-white text-sm">
-                                  {post.user?.name || post.userName || 'Unknown User'}
-                                </span>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                  {formatDate(post.createdAt)}
-                                </span>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-medium text-gray-900 dark:text-white text-sm">
+                                    {post.user?.name || post.userName || 'Unknown User'}
+                                  </span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    {formatDate(post.createdAt)}
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={() => handleDeletePostClick(post)}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30"
+                                  title={language === 'ar' ? 'حذف المنشور' : 'Delete Post'}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
                               </div>
                               <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
                                 {post.content}
@@ -756,6 +799,13 @@ const AdminDashboard: React.FC = () => {
         onClose={closeModals}
         circle={deleteCircleModal.circle}
         onCircleDeleted={handleDataUpdated}
+      />
+
+      <ConfirmDeletePostModal
+        isOpen={deletePostModal.isOpen}
+        onClose={closeModals}
+        onConfirm={confirmDeletePost}
+        postContent={deletePostModal.post?.content}
       />
     </div>
   );
