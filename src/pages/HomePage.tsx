@@ -92,14 +92,14 @@ const HomePage: React.FC = () => {
         <StatsCard
           icon={<BookOpen className="w-6 h-6" />}
           title={t('verses.read')}
-          value={quranProgress.readVerses}
+          value={typeof quranProgress.readVerses === 'number' ? quranProgress.readVerses : 0}
           color="green"
           loading={quranLoading}
         />
         <StatsCard
           icon={<Clock className="w-6 h-6" />}
           title={t('focus.hours')}
-          value={parseFloat((user?.focusHours || 0).toFixed(3))}
+          value={parseFloat((user?.focusHours || 0).toFixed(2))}
           color="purple"
         />
         <StatsCard
@@ -125,23 +125,23 @@ const HomePage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg"
+            className="bg-white dark:bg-gray-800 rounded-xl p-3 md:p-6 shadow-lg"
           >
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3 md:space-x-4">
               <img
                 src={user?.avatar}
                 alt={user?.name}
-                className="w-12 h-12 rounded-full"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover flex-shrink-0"
               />
               <button
                 onClick={() => setShowCreatePost(true)}
-                className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full px-4 py-3 text-left text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full px-4 py-2 md:py-3 text-left text-sm md:text-base text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 {language === 'ar' ? 'شارك إنجازاتك اليوم...' : 'Share your achievements today...'}
               </button>
               <button
                 onClick={() => setShowCreatePost(true)}
-                className="bg-green-500 text-white p-3 rounded-full hover:bg-green-600 transition-colors"
+                className="bg-green-500 text-white p-2.5 md:p-3 rounded-full hover:bg-green-600 transition-colors flex-shrink-0"
               >
                 <Plus className="w-5 h-5" />
               </button>

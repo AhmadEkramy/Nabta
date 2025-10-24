@@ -31,6 +31,7 @@ import {
 import {
     getUserSettings
 } from '../firebase/userSettings';
+import { syncUserQuranData } from '../firebase/syncQuranData';
 
 // User Settings Interface
 interface UserSettings {
@@ -79,6 +80,7 @@ const SettingsPage: React.FC = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [syncingQuranData, setSyncingQuranData] = useState(false);
 
   // Load user settings from Firebase
   useEffect(() => {
@@ -256,6 +258,49 @@ const SettingsPage: React.FC = () => {
       toast.error(errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handler for syncing Quran reading data
+  const handleSyncQuranData = async () => {
+    if (!user?.id) return;
+
+    setSyncingQuranData(true);
+    try {
+      const result = await syncUserQuranData(user.id);
+      
+      if (result.success) {
+        if (result.synced) {
+          toast.success(
+            language === 'ar' 
+              ? `تم تحديث البيانات! الآيات المقروءة: ${result.newCount} (كان: ${result.oldCount})`
+              : `Data synced! Verses read: ${result.newCount} (was: ${result.oldCount})`
+          );
+          // Refresh user data to show updated count
+          await refreshUser();
+        } else {
+          toast.success(
+            language === 'ar'
+              ? 'البيانات محدثة بالفعل ✓'
+              : 'Data is already up to date ✓'
+          );
+        }
+      } else {
+        toast.error(
+          language === 'ar'
+            ? 'خطأ في مزامنة البيانات'
+            : 'Error syncing data'
+        );
+      }
+    } catch (error) {
+      console.error('Error syncing Quran data:', error);
+      toast.error(
+        language === 'ar'
+          ? 'خطأ في مزامنة البيانات'
+          : 'Error syncing data'
+      );
+    } finally {
+      setSyncingQuranData(false);
     }
   };
 
@@ -442,6 +487,49 @@ const SettingsPage: React.FC = () => {
           </motion.div>
         ))}
       </div>
+
+      {/* Data Management */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
+        className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg"
+      >
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          {language === 'ar' ? 'إدارة البيانات' : 'Data Management'}
+        </h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div>
+              <p className="font-medium text-gray-900 dark:text-white">
+                {language === 'ar' ? 'مزامنة بيانات القرآن' : 'Sync Quran Data'}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {language === 'ar' 
+                  ? 'تحديث عدد الآيات المقروءة من السجلات الفعلية' 
+                  : 'Update verses read count from actual records'}
+              </p>
+            </div>
+            <button
+              onClick={handleSyncQuranData}
+              disabled={syncingQuranData}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {syncingQuranData ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>{language === 'ar' ? 'جاري المزامنة...' : 'Syncing...'}</span>
+                </>
+              ) : (
+                <span>{language === 'ar' ? 'مزامنة' : 'Sync'}</span>
+              )}
+            </button>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Danger Zone */}
       <motion.div

@@ -70,27 +70,15 @@ export const usePostComments = (postId: string) => {
     }
   }, [postId]);
 
-  const addComment = async (content: string) => {
+  const addComment = async (content: string, parentCommentId?: string) => {
     if (!user || !content.trim()) return false;
 
     try {
       setAddingComment(true);
-      const commentId = await addPostComment(postId, user.id, user.name, user.avatar, content);
+      const commentId = await addPostComment(postId, user.id, user.name, user.avatar, content, parentCommentId);
       
-      // Add the new comment to the local state immediately
-      const newComment = {
-        id: commentId,
-        postId,
-        userId: user.id,
-        userName: user.name,
-        userAvatar: user.avatar,
-        content,
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        likedBy: [],
-      };
-      
-      setComments(prev => [newComment, ...prev]);
+      // Refresh comments to get the updated nested structure
+      await fetchComments();
       return true;
     } catch (error) {
       console.error('Error adding comment:', error);

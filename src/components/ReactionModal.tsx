@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 
 type ReactionType = 'like' | 'laugh' | 'wow' | 'sad' | 'angry' | 'support';
@@ -61,6 +62,7 @@ const ReactionModal: React.FC<ReactionModalProps> = ({
   reactionUsers = []
 }) => {
   const { language } = useLanguage();
+  const navigate = useNavigate();
 
   // Use real users if provided, otherwise fall back to mock data
   const mockUsers: ReactionUser[] = [
@@ -91,6 +93,11 @@ const ReactionModal: React.FC<ReactionModalProps> = ({
   }, {} as Record<ReactionType, { config: any; count: number; users: ReactionUser[] }>);
 
   const totalReactions = usersToShow.length;
+
+  const handleUserClick = (userId: string) => {
+    navigate(`/profile/${userId}`);
+    onClose(); // Close the modal after navigation
+  };
 
   if (!isOpen) return null;
 
@@ -161,6 +168,7 @@ const ReactionModal: React.FC<ReactionModalProps> = ({
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}
+                        onClick={() => handleUserClick(user.id)}
                         className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                       >
                         <img

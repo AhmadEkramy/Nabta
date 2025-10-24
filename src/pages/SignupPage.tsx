@@ -1,26 +1,94 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, AtSign, Check, AlertCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { checkUsernameAvailability } from '../firebase/userProfile';
 
 const SignupPage: React.FC = () => {
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signup } = useAuth();
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameError, setUsernameError] = useState('');
+  const { signup, user } = useAuth();
   const { language, t } = useLanguage();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/home');
+    }
+  }, [user, navigate]);
+
+  // Check username availability
+  useEffect(() => {
+    const checkUsername = async () => {
+      const trimmedUsername = username.trim().toLowerCase();
+      
+      if (trimmedUsername.length === 0) {
+        setUsernameAvailable(null);
+        setUsernameError('');
+        return;
+      }
+
+      if (trimmedUsername.length < 3) {
+        setUsernameAvailable(false);
+        setUsernameError(language === 'ar' ? 'اسم المستخدم يجب أن يكون 3 أحرف على الأقل' : 'Username must be at least 3 characters');
+        return;
+      }
+
+      const usernameRegex = /^[a-z0-9_.]+$/;
+      if (!usernameRegex.test(trimmedUsername)) {
+        setUsernameAvailable(false);
+        setUsernameError(language === 'ar' ? 'يمكن استخدام الحروف والأرقام و _ و . فقط' : 'Only letters, numbers, _ and . are allowed');
+        return;
+      }
+
+      setCheckingUsername(true);
+      setUsernameError('');
+
+      try {
+        const available = await checkUsernameAvailability(trimmedUsername);
+        setUsernameAvailable(available);
+        if (!available) {
+          setUsernameError(language === 'ar' ? 'اسم المستخدم محجوز بالفعل' : 'Username is already taken');
+        }
+      } catch (err) {
+        console.error('Error checking username:', err);
+        setUsernameAvailable(null);
+        setUsernameError(language === 'ar' ? 'حدث خطأ أثناء التحقق' : 'Error checking availability');
+      } finally {
+        setCheckingUsername(false);
+      }
+    };
+
+    const timeoutId = setTimeout(checkUsername, 500);
+    return () => clearTimeout(timeoutId);
+  }, [username, language]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!username.trim()) {
+      toast.error(language === 'ar' ? 'اسم المستخدم مطلوب' : 'Username is required');
+      return;
+    }
+
+    if (!usernameAvailable) {
+      toast.error(language === 'ar' ? 'اسم المستخدم غير متاح' : 'Username is not available');
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast.error(language === 'ar' ? 'كلمات المرور غير متطابقة' : 'Passwords do not match');
       return;
@@ -29,7 +97,7 @@ const SignupPage: React.FC = () => {
     setLoading(true);
 
     try {
-      await signup(email, password, name);
+      await signup(email, password, name, username.trim().toLowerCase());
       toast.success(language === 'ar' ? 'تم إنشاء الحساب بنجاح!' : 'Account created successfully!');
       navigate('/home');
     } catch (error) {
@@ -150,11 +218,72 @@ const SignupPage: React.FC = () => {
               </div>
             </motion.div>
 
+            {/* Username Field */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.55, duration: 0.6 }}
+            >
+              <label htmlFor="username" className="block text-sm font-medium text-white mb-2 drop-shadow-md">
+                {language === 'ar' ? 'اسم المستخدم' : 'Username'}
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-300 group-hover:scale-110">
+                  <AtSign className="h-5 w-5 text-gray-300 group-hover:text-green-400 transition-colors duration-300" />
+                </div>
+                <motion.input
+                  whileFocus={{ scale: 1.02 }}
+                  id="username"
+                  name="username"
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                  className="w-full px-4 py-3 pl-12 pr-12 bg-white/20 backdrop-blur-sm border border-white/30 placeholder-gray-300 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 hover:bg-white/25 hover:border-green-400/50"
+                  placeholder={language === 'ar' ? 'مثال: ahmed_ekramy' : 'e.g., ahmed_ekramy'}
+                />
+                <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                  {checkingUsername && (
+                    <Loader2 className="h-5 w-5 text-gray-300 animate-spin" />
+                  )}
+                  {!checkingUsername && usernameAvailable === true && (
+                    <Check className="h-5 w-5 text-green-400" />
+                  )}
+                  {!checkingUsername && usernameAvailable === false && (
+                    <AlertCircle className="h-5 w-5 text-red-400" />
+                  )}
+                </div>
+              </div>
+              {usernameError && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm text-red-300 drop-shadow-md"
+                >
+                  {usernameError}
+                </motion.p>
+              )}
+              {!usernameError && usernameAvailable === true && username.length > 0 && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm text-green-300 drop-shadow-md"
+                >
+                  {language === 'ar' ? '✓ اسم المستخدم متاح!' : '✓ Username is available!'}
+                </motion.p>
+              )}
+              <p className="mt-1 text-xs text-gray-300 drop-shadow-md">
+                {language === 'ar' 
+                  ? 'يمكنك استخدام الحروف الإنجليزية والأرقام و _ و . فقط'
+                  : 'Use only letters, numbers, _ and . (3-30 characters)'}
+              </p>
+            </motion.div>
+
             {/* Email Field */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
+              transition={{ delay: 0.65, duration: 0.6 }}
             >
               <label htmlFor="email" className="block text-sm font-medium text-white mb-2 drop-shadow-md">
                 {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
@@ -181,7 +310,7 @@ const SignupPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.7, duration: 0.6 }}
+              transition={{ delay: 0.75, duration: 0.6 }}
             >
               <label htmlFor="password" className="block text-sm font-medium text-white mb-2 drop-shadow-md">
                 {language === 'ar' ? 'كلمة المرور' : 'Password'}
@@ -221,7 +350,7 @@ const SignupPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.8, duration: 0.6 }}
+              transition={{ delay: 0.85, duration: 0.6 }}
             >
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-white mb-2 drop-shadow-md">
                 {language === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm Password'}

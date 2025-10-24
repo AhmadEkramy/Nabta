@@ -2,10 +2,12 @@ export interface User {
   id: string;
   uid: string;
   name: string;
+  username?: string; // Unique username (e.g., @ahmed_ekramy)
   displayName?: string;
   email: string;
   avatar: string;
   photoURL?: string;
+  coverImage?: string; // Profile cover/banner image
   xp: number;
   level: number;
   streak: number;
@@ -22,7 +24,6 @@ export interface User {
   followingList?: string[];
   bio?: string;
   location?: string;
-  coverImage?: string;
 }
 
 export interface Circle {

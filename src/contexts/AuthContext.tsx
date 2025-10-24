@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   firebaseUser: FirebaseUser | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, username?: string) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
   refreshUser: () => Promise<void>;
@@ -48,10 +48,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Function to create user profile in Firestore
-  const createUserProfile = async (firebaseUser: FirebaseUser, name: string): Promise<User> => {
+  const createUserProfile = async (firebaseUser: FirebaseUser, name: string, username?: string): Promise<User> => {
     const userProfile: User = {
       id: firebaseUser.uid,
+      uid: firebaseUser.uid,
       name: name || firebaseUser.displayName || 'User',
+      username: username, // Add username
       email: firebaseUser.email || '',
       avatar: firebaseUser.photoURL || '/avatar.jpeg',
       xp: 0,
@@ -171,7 +173,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string, username?: string) => {
     try {
       setLoading(true);
       const userCredential = await signUpWithEmail(email, password, name);
@@ -179,13 +181,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Try to create profile in Firestore, but fallback to temp profile if it fails
       let userProfile: User;
       try {
-        userProfile = await createUserProfile(userCredential.user, name);
+        userProfile = await createUserProfile(userCredential.user, name, username);
       } catch (createError) {
         console.warn('Could not create profile in Firestore, using temporary profile:', createError);
         // Create temporary local profile
         userProfile = {
           id: userCredential.user.uid,
           name: name,
+          username: username,
           email: userCredential.user.email || '',
           avatar: userCredential.user.photoURL || '/avatar.jpeg',
           xp: 0,

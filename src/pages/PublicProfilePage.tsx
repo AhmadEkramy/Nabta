@@ -185,7 +185,7 @@ const PublicProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 px-2 sm:px-4">
       {/* Cover Image & Profile Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -206,28 +206,28 @@ const PublicProfilePage: React.FC = () => {
         </div>
 
         {/* Profile Info */}
-        <div className="relative px-6 pb-6">
-          {/* Profile Picture */}
-          <div className="flex items-end justify-between -mt-16 mb-4">
+        <div className="relative px-4 sm:px-6 pb-6">
+          {/* Profile Picture & Action Buttons */}
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-16 mb-4">
             <img
               src={profileUser.avatar}
               alt={profileUser.name}
-              className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg"
+              className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg"
             />
             
             {!isOwnProfile && (
-              <div className="flex items-center space-x-3 mt-20">
+              <div className="flex items-center gap-2 sm:gap-3 mt-4 sm:mt-20">
                 <Link
                   to={`/chat?user=${profileUser.id}`}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm sm:text-base"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>{language === 'ar' ? 'رسالة' : 'Message'}</span>
+                  <span className="hidden sm:inline">{language === 'ar' ? 'رسالة' : 'Message'}</span>
                 </Link>
                 
                 <button
                   onClick={handleFollow}
-                  className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-colors ${
+                  className={`flex items-center justify-center gap-1 sm:gap-2 px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${
                     isFollowing
                       ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                       : 'bg-green-500 text-white hover:bg-green-600'
@@ -246,7 +246,7 @@ const PublicProfilePage: React.FC = () => {
                   )}
                 </button>
 
-                <button className="p-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                <button className="flex items-center justify-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                   <MoreHorizontal className="w-4 h-4" />
                 </button>
               </div>
@@ -256,26 +256,28 @@ const PublicProfilePage: React.FC = () => {
           {/* User Info */}
           <div className="space-y-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                 {profileUser.name}
               </h1>
-              <p className="text-gray-500 dark:text-gray-400">@{profileUser.name.toLowerCase().replace(/\s+/g, '_')}</p>
+              <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                @{profileUser.username || profileUser.name.toLowerCase().replace(/\s+/g, '_')}
+              </p>
             </div>
 
             {profileUser.bio && (
-              <p className="text-gray-700 dark:text-gray-300 max-w-2xl">
+              <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 max-w-2xl whitespace-pre-wrap">
                 {profileUser.bio}
               </p>
             )}
 
-            <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
               {profileUser.location && (
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
                   <span>{profileUser.location}</span>
                 </div>
               )}
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
                 <span>
                   {language === 'ar' ? 'انضم في' : 'Joined'} {new Date(profileUser.joinedAt).toLocaleDateString()}
@@ -284,28 +286,28 @@ const PublicProfilePage: React.FC = () => {
             </div>
 
             {/* Follow Stats */}
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center gap-4 sm:gap-6">
               <div className="text-center">
-                <div className="text-xl font-bold text-gray-900 dark:text-white">
+                <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                   {userPosts.length}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   {language === 'ar' ? 'منشور' : 'Posts'}
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold text-gray-900 dark:text-white">
+                <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                   {(profileUser.followers || 0).toLocaleString()}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   {language === 'ar' ? 'متابع' : 'Followers'}
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold text-gray-900 dark:text-white">
+                <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                   {(profileUser.following || 0).toLocaleString()}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   {language === 'ar' ? 'يتابع' : 'Following'}
                 </div>
               </div>
@@ -315,21 +317,21 @@ const PublicProfilePage: React.FC = () => {
       </motion.div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((stat, index) => (
           <motion.div
             key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 * index }}
-            className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg"
+            className="bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 shadow-lg"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
               </div>
-              <div className={`p-3 rounded-full ${colorClasses[stat.color]}`}>
+              <div className={`p-2 sm:p-3 rounded-full ${colorClasses[stat.color]}`}>
                 {stat.icon}
               </div>
             </div>
@@ -342,26 +344,33 @@ const PublicProfilePage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg"
+        className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg"
       >
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
           {language === 'ar' ? 'دوائر النمو' : 'Growth Circles'}
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           {userCircles.length > 0 ? (
-            userCircles.map((circle, index) => (
-              <div
-                key={circle.id}
-                className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-              >
-                <h4 className="font-medium text-gray-900 dark:text-white">
-                  {language === 'ar' ? circle.nameAr : circle.name}
-                </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {circle.members} {language === 'ar' ? 'عضو' : 'members'}
-                </p>
-              </div>
-            ))
+            userCircles.map((circle, index) => {
+              // Handle both string and object formats for circle names
+              const circleName = language === 'ar' 
+                ? (typeof circle.nameAr === 'string' ? circle.nameAr : circle.nameAr?.ar || circle.name?.ar || circle.name)
+                : (typeof circle.name === 'string' ? circle.name : circle.name?.en || circle.nameAr?.en || circle.nameAr);
+              
+              return (
+                <div
+                  key={circle.id}
+                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                >
+                  <h4 className="font-medium text-gray-900 dark:text-white">
+                    {circleName}
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {circle.members} {language === 'ar' ? 'عضو' : 'members'}
+                  </p>
+                </div>
+              );
+            })
           ) : (
             <div className="col-span-3 text-center text-gray-500 dark:text-gray-400">
               {language === 'ar' ? 'لم ينضم إلى أي دوائر بعد' : 'No circles joined yet'}
@@ -380,7 +389,7 @@ const PublicProfilePage: React.FC = () => {
         <div className="flex border-b border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setActiveTab('posts')}
-            className={`flex-1 flex items-center justify-center space-x-2 py-4 px-6 font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-4 px-3 sm:px-6 font-medium transition-colors text-sm sm:text-base ${
               activeTab === 'posts'
                 ? 'text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -391,7 +400,7 @@ const PublicProfilePage: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('about')}
-            className={`flex-1 flex items-center justify-center space-x-2 py-4 px-6 font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-4 px-3 sm:px-6 font-medium transition-colors text-sm sm:text-base ${
               activeTab === 'about'
                 ? 'text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -402,7 +411,7 @@ const PublicProfilePage: React.FC = () => {
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {activeTab === 'posts' && (
             <div className="space-y-6">
               {userPosts.length > 0 ? (
@@ -430,7 +439,11 @@ const PublicProfilePage: React.FC = () => {
                           {post.circleName && (
                             <>
                               <span>•</span>
-                              <span className="text-green-600 dark:text-green-400">{post.circleName}</span>
+                              <span className="text-green-600 dark:text-green-400">
+                                {typeof post.circleName === 'string' 
+                                  ? post.circleName 
+                                  : (language === 'ar' ? post.circleName?.ar : post.circleName?.en) || post.circleName}
+                              </span>
                             </>
                           )}
                         </div>
@@ -474,7 +487,7 @@ const PublicProfilePage: React.FC = () => {
                         </span>
                       </div>
                       <span className="font-semibold text-gray-900 dark:text-white">
-                        {profileUser.readVerses || 0}
+                        {typeof profileUser.readVerses === 'number' ? profileUser.readVerses : 0}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -485,7 +498,7 @@ const PublicProfilePage: React.FC = () => {
                         </span>
                       </div>
                       <span className="font-semibold text-gray-900 dark:text-white">
-                        {profileUser.focusHours || 0}h
+                        {typeof profileUser.focusHours === 'number' ? profileUser.focusHours.toFixed(2) : '0.00'}h
                       </span>
                     </div>
                   </div>
@@ -497,14 +510,21 @@ const PublicProfilePage: React.FC = () => {
                   </h4>
                   <div className="space-y-2">
                     {achievements.length > 0 ? (
-                      achievements.map((achievement, index) => (
-                        <div key={index} className="flex items-center space-x-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                          <Trophy className="w-4 h-4 text-yellow-500" />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {language === 'ar' ? achievement.nameAr : achievement.name}
-                          </span>
-                        </div>
-                      ))
+                      achievements.map((achievement, index) => {
+                        // Handle both string and object formats for achievement names
+                        const achievementName = language === 'ar'
+                          ? (typeof achievement.nameAr === 'string' ? achievement.nameAr : achievement.nameAr?.ar || achievement.name?.ar || achievement.name)
+                          : (typeof achievement.name === 'string' ? achievement.name : achievement.name?.en || achievement.nameAr?.en || achievement.nameAr);
+                        
+                        return (
+                          <div key={index} className="flex items-center space-x-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                            <Trophy className="w-4 h-4 text-yellow-500" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              {achievementName}
+                            </span>
+                          </div>
+                        );
+                      })
                     ) : (
                       <div className="text-sm text-gray-500 dark:text-gray-400">
                         {language === 'ar' ? 'لا توجد إنجازات بعد' : 'No achievements yet'}

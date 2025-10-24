@@ -16,12 +16,15 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import CoverImageModal from '../components/CoverImageModal';
 import EditBioModal from '../components/EditBioModal';
+import EditNameModal from '../components/EditNameModal';
+import EditUsernameModal from '../components/EditUsernameModal';
 import PostReactionsWrapper from '../components/PostReactionsWrapper';
 import ProfileImageModal from '../components/ProfileImageModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { getUserAchievements, getUserPosts, getUserProfile, updateUserProfile } from '../firebase/userProfile';
+import { getUserAchievements, getUserPosts, getUserProfile, updateUserNameEverywhere, updateUserProfile } from '../firebase/userProfile';
 import { useSharedPosts } from '../hooks/useSharedPosts';
 import { ExtendedUserType, Post } from '../types';
 
@@ -50,6 +53,9 @@ const ProfilePage: React.FC = () => {
   const [isLoadingAchievements, setIsLoadingAchievements] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showEditBioModal, setShowEditBioModal] = useState(false);
+  const [showEditNameModal, setShowEditNameModal] = useState(false);
+  const [showEditUsernameModal, setShowEditUsernameModal] = useState(false);
+  const [showCoverImageModal, setShowCoverImageModal] = useState(false);
 
   // Get shared posts
   const { sharedPosts, loading: loadingSharedPosts, refreshSharedPosts } = useSharedPosts(user?.id || '');
@@ -180,13 +186,15 @@ const ProfilePage: React.FC = () => {
     {
       icon: <BookOpen className="w-6 h-6" />,
       label: t('verses.read'),
-      value: displayUser?.readVersesCount || (Array.isArray(displayUser?.readVerses) ? displayUser.readVerses.length : displayUser?.readVerses) || 0,
+      value: typeof displayUser?.readVersesCount === 'number' 
+        ? displayUser.readVersesCount 
+        : (Array.isArray(displayUser?.readVerses) ? displayUser.readVerses.length : (typeof displayUser?.readVerses === 'number' ? displayUser.readVerses : 0)),
       color: 'teal'
     },
     {
       icon: <Clock className="w-6 h-6" />,
       label: t('focus.hours'),
-      value: Math.round((displayUser?.focusHours || 0) * 10) / 10, // Round to 1 decimal place
+      value: parseFloat((displayUser?.focusHours || 0).toFixed(2)), // Round to 2 decimal places
       color: 'orange'
     },
     {
@@ -208,71 +216,138 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      {/* Profile Header */}
+      {/* Profile Header with Cover Image */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-8 text-white"
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden"
       >
-        <div className="flex items-center space-x-6">
-          {isLoading ? (
-            <div className="w-24 h-24 rounded-full border-4 border-white/20 bg-white/10 animate-pulse" />
-          ) : (
-            <div className="relative group cursor-pointer" onClick={() => setShowImageModal(true)}>
-              <img
-                src={displayUser?.avatar}
-                alt={displayUser?.name}
-                className="w-24 h-24 rounded-full border-4 border-white/20 object-cover transition-transform group-hover:scale-105"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayUser?.name || 'User')}&background=random&size=200`;
-                }}
-              />
-              <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="text-white text-center">
-                  <svg className="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span className="text-xs font-medium">
-                    {language === 'ar' ? 'تغيير' : 'Change'}
-                  </span>
+        {/* Cover Image */}
+        <div className="relative h-48 md:h-64 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600">
+          {displayUser?.coverImage && (
+            <img
+              src={displayUser.coverImage}
+              alt="Cover"
+              className="w-full h-full object-cover"
+            />
+          )}
+          {/* Edit Cover Button */}
+          <button
+            onClick={() => setShowCoverImageModal(true)}
+            className="absolute top-4 right-4 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg shadow-lg transition-all flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="text-sm font-medium">
+              {language === 'ar' ? 'تغيير الخلفية' : 'Edit Cover'}
+            </span>
+          </button>
+        </div>
+
+        {/* Profile Info */}
+        <div className="relative px-6 pb-6">
+          {/* Profile Picture */}
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-16 mb-4">
+            {isLoading ? (
+              <div className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 bg-gray-300 animate-pulse" />
+            ) : (
+              <div className="relative group cursor-pointer w-32 h-32" onClick={() => setShowImageModal(true)}>
+                <img
+                  src={displayUser?.avatar}
+                  alt={displayUser?.name}
+                  className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 object-cover transition-transform group-hover:scale-105 shadow-xl"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayUser?.name || 'User')}&background=random&size=200`;
+                  }}
+                />
+                <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="text-white text-center">
+                    <svg className="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span className="text-xs font-medium">
+                      {language === 'ar' ? 'تغيير' : 'Change'}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold mb-2">
-              {isLoading ? (
-                <div className="h-10 bg-white/10 rounded animate-pulse w-48" />
-              ) : (
-                displayUser?.name
+            )}
+          </div>
+
+          {/* User Info */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+                {isLoading ? (
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-48" />
+                ) : (
+                  displayUser?.name
+                )}
+              </h1>
+              {!isLoading && (
+                <button
+                  onClick={() => setShowEditNameModal(true)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                  title={language === 'ar' ? 'تعديل الاسم' : 'Edit Name'}
+                >
+                  <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
               )}
-            </h1>
-            <div className="text-green-100 text-lg mb-4">
+            </div>
+
+            {/* Username */}
+            <div className="flex items-center gap-2">
               {isLoading ? (
-                <div className="h-6 bg-white/10 rounded animate-pulse w-64" />
+                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-32" />
               ) : (
-                <p className="text-green-100 text-lg">{displayUser?.email}</p>
+                <>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    @{displayUser?.username || displayUser?.name.toLowerCase().replace(/\s+/g, '_')}
+                  </p>
+                  <button
+                    onClick={() => setShowEditUsernameModal(true)}
+                    className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                    title={language === 'ar' ? 'تعديل اسم المستخدم' : 'Edit Username'}
+                  >
+                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                </>
               )}
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Trophy className="w-5 h-5" />
-                <span className="font-medium">
+
+            <div className="text-gray-600 dark:text-gray-400">
+              {isLoading ? (
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-64" />
+              ) : (
+                <p>{displayUser?.email}</p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <span className="text-gray-700 dark:text-gray-300 font-medium">
                   {isLoading ? '...' : `${t('level')} ${displayUser?.level}`}
                 </span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Star className="w-5 h-5" />
-                <span className="font-medium">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                <span className="text-gray-700 dark:text-gray-300 font-medium">
                   {isLoading ? '...' : `${displayUser?.xp} ${t('xp')}`}
                 </span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-5 h-5" />
-                <span className="font-medium">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <span className="text-gray-700 dark:text-gray-300 font-medium">
                   {isLoading ? '...' : `${language === 'ar' ? 'انضم في' : 'Joined'} ${new Date(displayUser?.joinedAt || '').toLocaleDateString()}`}
                 </span>
               </div>
@@ -641,7 +716,7 @@ const ProfilePage: React.FC = () => {
                       </button>
                     )}
                   </div>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                     {displayUser?.bio || (language === 'ar' ? 'لم يتم إضافة نبذة شخصية بعد' : 'No bio added yet')}
                   </p>
                 </div>
@@ -694,7 +769,7 @@ const ProfilePage: React.FC = () => {
                           ></div>
                         </div>
                         <span className="text-sm text-gray-500 w-12">
-                          {displayUser?.weeklyProgress?.[day.toLowerCase()]?.focusHours?.toFixed(1) || '0.0'}h
+                          {displayUser?.weeklyProgress?.[day.toLowerCase()]?.focusHours?.toFixed(2) || '0.00'}h
                         </span>
                       </div>
                     ))}
@@ -732,6 +807,95 @@ const ProfilePage: React.FC = () => {
             } catch (error) {
               console.error('Error updating bio:', error);
               toast.error(language === 'ar' ? 'حدث خطأ أثناء تحديث النبذة الشخصية' : 'Error updating bio');
+            }
+          }}
+        />
+      )}
+
+      {/* Edit Name Modal */}
+      {displayUser && (
+        <EditNameModal
+          isOpen={showEditNameModal}
+          onClose={() => setShowEditNameModal(false)}
+          currentName={displayUser.name || ''}
+          onSave={async (newName: string) => {
+            try {
+              const loadingToast = toast.loading(
+                language === 'ar' 
+                  ? 'جاري تحديث الاسم في جميع المنشورات...' 
+                  : 'Updating name across all posts...'
+              );
+              
+              await updateUserNameEverywhere(displayUser.id, newName);
+              await refreshUser();
+              
+              toast.success(
+                language === 'ar' 
+                  ? 'تم تحديث الاسم بنجاح في جميع الأماكن' 
+                  : 'Name updated successfully everywhere',
+                { id: loadingToast }
+              );
+              
+              // Refresh the page data
+              const freshProfile = await getUserProfile(displayUser.id);
+              if (freshProfile) {
+                setProfileData(freshProfile as ExtendedUserType);
+              }
+            } catch (error) {
+              console.error('Error updating name:', error);
+              toast.error(language === 'ar' ? 'حدث خطأ أثناء تحديث الاسم' : 'Error updating name');
+            }
+          }}
+        />
+      )}
+
+      {/* Edit Username Modal */}
+      {displayUser && showEditUsernameModal && (
+        <EditUsernameModal
+          currentUsername={displayUser.username || displayUser.name.toLowerCase().replace(/\s+/g, '_')}
+          userId={displayUser.id}
+          onClose={() => setShowEditUsernameModal(false)}
+          onSave={async () => {
+            try {
+              await refreshUser();
+              toast.success(
+                language === 'ar' 
+                  ? 'تم تحديث اسم المستخدم بنجاح' 
+                  : 'Username updated successfully'
+              );
+              
+              // Refresh the page data
+              const freshProfile = await getUserProfile(displayUser.id);
+              if (freshProfile) {
+                setProfileData(freshProfile as ExtendedUserType);
+              }
+            } catch (error) {
+              console.error('Error after updating username:', error);
+            }
+          }}
+        />
+      )}
+
+      {/* Cover Image Modal */}
+      {displayUser && (
+        <CoverImageModal
+          isOpen={showCoverImageModal}
+          onClose={() => setShowCoverImageModal(false)}
+          currentCoverImage={displayUser.coverImage}
+          userId={displayUser.id}
+          onCoverUpdate={async (newCoverUrl: string) => {
+            try {
+              await updateUserProfile(displayUser.id, { coverImage: newCoverUrl });
+              await refreshUser();
+              
+              // Refresh the page data
+              const freshProfile = await getUserProfile(displayUser.id);
+              if (freshProfile) {
+                setProfileData(freshProfile as ExtendedUserType);
+              }
+            } catch (error) {
+              console.error('Error updating cover image:', error);
+              throw error;
             }
           }}
         />

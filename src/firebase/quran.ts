@@ -110,9 +110,12 @@ export const getRandomVerse = async () => {
 // Get user's Quran reading progress
 export const getUserQuranProgress = async (userId: string) => {
   try {
+    console.log('📖 Fetching Quran progress for user:', userId);
+    
     const userDoc = await getDoc(doc(db, 'users', userId));
     
     if (!userDoc.exists()) {
+      console.log('⚠️ User document does not exist');
       return {
         readVerses: 0,
         totalVerses: 6236, // Total verses in Quran
@@ -123,17 +126,42 @@ export const getUserQuranProgress = async (userId: string) => {
     }
     
     const userData = userDoc.data();
+    console.log('📄 User data from Firebase:', {
+      readVersesCount: userData.readVersesCount,
+      readVersesArrayLength: Array.isArray(userData.readVerses) ? userData.readVerses.length : 'not an array',
+      readVersesType: typeof userData.readVerses
+    });
     
-    // Get user's reading history for streak calculation
-    const readingHistoryQuery = query(
+    // Get all user's reading history to ensure accuracy
+    const allReadingHistoryQuery = query(
+      collection(db, 'userVerseReads'),
+      where('userId', '==', userId)
+    );
+    
+    const allReadingHistorySnapshot = await getDocs(allReadingHistoryQuery);
+    
+    // Get unique verse IDs from reading history
+    const uniqueReadVerses = new Set<string>();
+    allReadingHistorySnapshot.docs.forEach(doc => {
+      const verseId = doc.data().verseId;
+      if (verseId) {
+        uniqueReadVerses.add(verseId);
+      }
+    });
+    
+    const actualReadCount = uniqueReadVerses.size;
+    console.log('📊 Actual read verses from userVerseReads collection:', actualReadCount);
+    
+    // Get recent reading history for streak calculation
+    const recentReadingHistoryQuery = query(
       collection(db, 'userVerseReads'),
       where('userId', '==', userId),
       orderBy('readAt', 'desc'),
       limit(30) // Last 30 days for streak calculation
     );
     
-    const readingHistorySnapshot = await getDocs(readingHistoryQuery);
-    const readingHistory = readingHistorySnapshot.docs.map(doc => ({
+    const recentReadingHistorySnapshot = await getDocs(recentReadingHistoryQuery);
+    const readingHistory = recentReadingHistorySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
       readAt: doc.data().readAt?.toDate?.() || new Date(doc.data().readAt),
@@ -143,13 +171,34 @@ export const getUserQuranProgress = async (userId: string) => {
     const currentStreak = calculateCurrentStreak(readingHistory);
     const longestStreak = calculateLongestStreak(readingHistory);
     
-    // Safely get read verses count
-    let readVersesCount = 0;
-    if (userData.readVersesCount) {
-      readVersesCount = userData.readVersesCount;
-    } else if (Array.isArray(userData.readVerses)) {
-      readVersesCount = userData.readVerses.length;
+    // Determine the most accurate read verses count
+    // Priority: actualReadCount from userVerseReads > readVersesCount > readVerses array length
+    let readVersesCount = actualReadCount; // Use the actual count from userVerseReads collection
+    
+    // If no data in userVerseReads, fallback to user document data
+    if (readVersesCount === 0) {
+      if (typeof userData.readVersesCount === 'number' && userData.readVersesCount > 0) {
+        readVersesCount = userData.readVersesCount;
+      } else if (Array.isArray(userData.readVerses) && userData.readVerses.length > 0) {
+        readVersesCount = userData.readVerses.length;
+      } else if (userData.readVerses && typeof userData.readVerses === 'number') {
+        readVersesCount = userData.readVerses;
+      }
     }
+    
+    // Update user document if there's a mismatch
+    if (actualReadCount > 0 && actualReadCount !== userData.readVersesCount) {
+      console.log('🔄 Syncing readVersesCount in user document:', actualReadCount);
+      try {
+        await updateDoc(doc(db, 'users', userId), {
+          readVersesCount: actualReadCount
+        });
+      } catch (updateError) {
+        console.error('Error updating readVersesCount:', updateError);
+      }
+    }
+
+    console.log('✅ Final read verses count:', readVersesCount);
 
     return {
       readVerses: readVersesCount,
@@ -159,7 +208,7 @@ export const getUserQuranProgress = async (userId: string) => {
       lastReadDate: readingHistory.length > 0 ? readingHistory[0].readAt : null,
     };
   } catch (error) {
-    console.error('Error fetching user Quran progress:', error);
+    console.error('❌ Error fetching user Quran progress:', error);
     return {
       readVerses: 0,
       totalVerses: 6236,
@@ -173,13 +222,7 @@ export const getUserQuranProgress = async (userId: string) => {
 // Mark a verse as read
 export const markVerseAsRead = async (userId: string, verseId: string, verseData: any) => {
   try {
-    // Add to user's reading history
-    await addDoc(collection(db, 'userVerseReads'), {
-      userId,
-      verseId,
-      verseData,
-      readAt: serverTimestamp(),
-    });
+    console.log('📝 Marking verse as read:', { userId, verseId });
     
     // Update user's total read verses count
     const userRef = doc(db, 'users', userId);
@@ -192,24 +235,48 @@ export const markVerseAsRead = async (userId: string, verseId: string, verseData
       // Ensure currentReadVerses is an array
       const readVersesArray = Array.isArray(currentReadVerses) ? currentReadVerses : [];
 
-      // Only update if verse hasn't been read before
-      if (!readVersesArray.includes(verseId)) {
-        await updateDoc(userRef, {
-          readVerses: arrayUnion(verseId),
-          readVersesCount: readVersesArray.length + 1,
-        });
+      // Only proceed if verse hasn't been read before
+      if (readVersesArray.includes(verseId)) {
+        console.log('⚠️ Verse already marked as read:', verseId);
+        return false; // Already read
       }
+
+      // Add to user's reading history
+      await addDoc(collection(db, 'userVerseReads'), {
+        userId,
+        verseId,
+        verseData,
+        readAt: serverTimestamp(),
+      });
+      
+      // Update user document
+      await updateDoc(userRef, {
+        readVerses: arrayUnion(verseId),
+        readVersesCount: readVersesArray.length + 1,
+      });
+      
+      console.log('✅ Verse marked as read. New count:', readVersesArray.length + 1);
     } else {
+      // Add to user's reading history for new user
+      await addDoc(collection(db, 'userVerseReads'), {
+        userId,
+        verseId,
+        verseData,
+        readAt: serverTimestamp(),
+      });
+      
       // Create initial data for new user
       await updateDoc(userRef, {
         readVerses: [verseId],
         readVersesCount: 1,
       });
+      
+      console.log('✅ First verse marked for new user');
     }
     
     return true;
   } catch (error) {
-    console.error('Error marking verse as read:', error);
+    console.error('❌ Error marking verse as read:', error);
     throw error;
   }
 };

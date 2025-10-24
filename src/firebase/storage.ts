@@ -47,3 +47,6 @@ export const uploadImageAndGetURL = async (
   const uploadResult = await uploadFile(file, path);
   return await getDownloadURL(uploadResult.ref);
 };
+
+// Alias for uploadImageAndGetURL
+export const uploadImage = uploadImageAndGetURL;

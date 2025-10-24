@@ -89,19 +89,34 @@ export const addPostComment = async (
   userId: string,
   userName: string,
   userAvatar: string,
-  content: string
+  content: string,
+  parentCommentId?: string // Optional parent comment ID for replies
 ) => {
   try {
+    // Get user's username from their profile
+    let username = userName.toLowerCase().replace(/\s+/g, '_'); // Fallback
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        username = userData.username || username;
+      }
+    } catch (error) {
+      console.warn('Could not fetch username, using fallback:', error);
+    }
+
     // Add comment to comments collection
     const commentRef = await addDoc(collection(db, 'comments'), {
       postId,
       userId,
       userName,
+      username, // Add username field
       userAvatar,
       content,
       createdAt: serverTimestamp(),
       likes: 0,
       likedBy: [],
+      parentCommentId: parentCommentId || null, // For nested replies
     });
     
     // Update post comment count
@@ -151,16 +166,19 @@ export const getPostComments = async (postId: string) => {
     );
     
     const commentsSnapshot = await getDocs(commentsQuery);
-    const comments: Array<{
+    const allComments: Array<{
       id: string;
       content: string;
       postId: string;
       userId: string;
       userName: string;
+      username?: string;
       userAvatar: string;
       likes: number;
       likedBy: string[];
       createdAt: string | { seconds: number; nanoseconds: number };
+      parentCommentId: string | null;
+      replies?: any[];
     }> = [];
     
     commentsSnapshot.forEach((doc) => {
@@ -171,15 +189,39 @@ export const getPostComments = async (postId: string) => {
         postId: data.postId,
         userId: data.userId,
         userName: data.userName,
+        username: data.username, // Add username field
         userAvatar: data.userAvatar,
         likes: data.likes || 0,
         likedBy: data.likedBy || [],
         createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        parentCommentId: data.parentCommentId || null,
+        replies: [],
       };
-      comments.push(comment);
+      allComments.push(comment);
     });
     
-    return comments;
+    // Build nested structure: organize comments into parent-child relationships
+    const commentMap = new Map();
+    const topLevelComments: any[] = [];
+    
+    // First pass: create a map of all comments
+    allComments.forEach((comment) => {
+      commentMap.set(comment.id, { ...comment, replies: [] });
+    });
+    
+    // Second pass: build the tree structure
+    allComments.forEach((comment) => {
+      if (comment.parentCommentId && commentMap.has(comment.parentCommentId)) {
+        // This is a reply, add it to parent's replies array
+        const parent = commentMap.get(comment.parentCommentId);
+        parent.replies.push(commentMap.get(comment.id));
+      } else {
+        // This is a top-level comment
+        topLevelComments.push(commentMap.get(comment.id));
+      }
+    });
+    
+    return topLevelComments;
   } catch (error) {
     console.error('Error fetching comments:', error);
     return [];
@@ -428,12 +470,44 @@ export const deleteComment = async (commentId: string, userId: string) => {
       throw new Error('Not authorized to delete this comment');
     }
     
-    // Delete comment document
+    // Find and delete all nested replies
+    const repliesQuery = query(
+      collection(db, 'comments'),
+      where('parentCommentId', '==', commentId)
+    );
+    const repliesSnapshot = await getDocs(repliesQuery);
+    
+    let deletedCount = 1; // Count the main comment
+    
+    // Delete all replies recursively
+    const deleteRepliesRecursively = async (parentId: string) => {
+      const nestedRepliesQuery = query(
+        collection(db, 'comments'),
+        where('parentCommentId', '==', parentId)
+      );
+      const nestedRepliesSnapshot = await getDocs(nestedRepliesQuery);
+      
+      for (const replyDoc of nestedRepliesSnapshot.docs) {
+        // Recursively delete nested replies
+        await deleteRepliesRecursively(replyDoc.id);
+        await deleteDoc(replyDoc.ref);
+        deletedCount++;
+      }
+    };
+    
+    // Delete all direct and nested replies
+    for (const replyDoc of repliesSnapshot.docs) {
+      await deleteRepliesRecursively(replyDoc.id);
+      await deleteDoc(replyDoc.ref);
+      deletedCount++;
+    }
+    
+    // Delete the main comment
     await deleteDoc(commentRef);
     
     // Update post comment count
     await updateDoc(postRef, {
-      comments: increment(-1),
+      comments: increment(-deletedCount),
     });
     
     return true;
