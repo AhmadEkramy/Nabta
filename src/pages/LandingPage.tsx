@@ -456,7 +456,7 @@ const LandingPage: React.FC = () => {
 
               <Link
                 to="/login"
-                className="px-8 py-4 border-2 border-green-500 text-green-600 dark:text-green-400 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors text-lg font-medium"
+                className="px-8 py-4 border-2 border-white text-white rounded-xl hover:bg-white/10 backdrop-blur-sm transition-all duration-300 text-lg font-medium shadow-lg hover:shadow-xl hover:scale-105"
               >
                 {language === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
               </Link>
@@ -1044,7 +1044,7 @@ const LandingPage: React.FC = () => {
           </motion.div>
 
           {/* Team Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 lg:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8">
             {/* Team Member 1 */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -1052,9 +1052,9 @@ const LandingPage: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.1 }}
               whileHover={{ y: -10, scale: 1.05 }}
-              className="group relative"
+              className="group relative h-full"
             >
-              <div className="relative backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-green-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-green-500/40">
+              <div className="relative h-full backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-green-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-green-500/40 flex flex-col">
                 {/* Glow Effect */}
                 <div className="absolute inset-0 bg-gradient-to-b from-green-400/0 via-green-500/0 to-green-600/0 group-hover:from-green-400/10 group-hover:via-green-500/5 group-hover:to-green-600/10 transition-all duration-500"></div>
                 
@@ -1096,9 +1096,9 @@ const LandingPage: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.15 }}
               whileHover={{ y: -10, scale: 1.05 }}
-              className="group relative"
+              className="group relative h-full"
             >
-              <div className="relative backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-blue-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/40">
+              <div className="relative h-full backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-blue-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/40 flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-b from-blue-400/0 via-blue-500/0 to-blue-600/0 group-hover:from-blue-400/10 group-hover:via-blue-500/5 group-hover:to-blue-600/10 transition-all duration-500"></div>
                 
                 <div className="relative aspect-square overflow-hidden">
@@ -1133,9 +1133,9 @@ const LandingPage: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.2 }}
               whileHover={{ y: -10, scale: 1.05 }}
-              className="group relative"
+              className="group relative h-full"
             >
-              <div className="relative backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-purple-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/40">
+              <div className="relative h-full backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-purple-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/40 flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-b from-purple-400/0 via-purple-500/0 to-purple-600/0 group-hover:from-purple-400/10 group-hover:via-purple-500/5 group-hover:to-purple-600/10 transition-all duration-500"></div>
                 
                 <div className="relative aspect-square overflow-hidden">
@@ -1170,9 +1170,9 @@ const LandingPage: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.25 }}
               whileHover={{ y: -10, scale: 1.05 }}
-              className="group relative"
+              className="group relative h-full"
             >
-              <div className="relative backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-cyan-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-cyan-500/40">
+              <div className="relative h-full backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-cyan-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-cyan-500/40 flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-b from-cyan-400/0 via-cyan-500/0 to-cyan-600/0 group-hover:from-cyan-400/10 group-hover:via-cyan-500/5 group-hover:to-cyan-600/10 transition-all duration-500"></div>
                 
                 <div className="relative aspect-square overflow-hidden">
@@ -1207,9 +1207,9 @@ const LandingPage: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.3 }}
               whileHover={{ y: -10, scale: 1.05 }}
-              className="group relative"
+              className="group relative h-full"
             >
-              <div className="relative backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-orange-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-orange-500/40">
+              <div className="relative h-full backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-orange-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-orange-500/40 flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-b from-orange-400/0 via-orange-500/0 to-orange-600/0 group-hover:from-orange-400/10 group-hover:via-orange-500/5 group-hover:to-orange-600/10 transition-all duration-500"></div>
                 
                 <div className="relative aspect-square overflow-hidden">
@@ -1244,9 +1244,9 @@ const LandingPage: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.35 }}
               whileHover={{ y: -10, scale: 1.05 }}
-              className="group relative"
+              className="group relative h-full"
             >
-              <div className="relative backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-red-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-red-500/40">
+              <div className="relative h-full backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-red-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-red-500/40 flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-b from-red-400/0 via-red-500/0 to-red-600/0 group-hover:from-red-400/10 group-hover:via-red-500/5 group-hover:to-red-600/10 transition-all duration-500"></div>
                 
                 <div className="relative aspect-square overflow-hidden">
@@ -1281,9 +1281,9 @@ const LandingPage: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.4 }}
               whileHover={{ y: -10, scale: 1.05 }}
-              className="group relative"
+              className="group relative h-full"
             >
-              <div className="relative backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-pink-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-pink-500/40">
+              <div className="relative h-full backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-pink-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-pink-500/40 flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-b from-pink-400/0 via-pink-500/0 to-pink-600/0 group-hover:from-pink-400/10 group-hover:via-pink-500/5 group-hover:to-pink-600/10 transition-all duration-500"></div>
                 
                 <div className="relative aspect-square overflow-hidden">
@@ -1318,9 +1318,9 @@ const LandingPage: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.45 }}
               whileHover={{ y: -10, scale: 1.05 }}
-              className="group relative"
+              className="group relative h-full"
             >
-              <div className="relative backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-indigo-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/40">
+              <div className="relative h-full backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-indigo-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/40 flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-b from-indigo-400/0 via-indigo-500/0 to-indigo-600/0 group-hover:from-indigo-400/10 group-hover:via-indigo-500/5 group-hover:to-indigo-600/10 transition-all duration-500"></div>
                 
                 <div className="relative aspect-square overflow-hidden">
@@ -1355,9 +1355,9 @@ const LandingPage: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.5 }}
               whileHover={{ y: -10, scale: 1.05 }}
-              className="group relative"
+              className="group relative h-full"
             >
-              <div className="relative backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-teal-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-teal-500/40">
+              <div className="relative h-full backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-teal-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-teal-500/40 flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-b from-teal-400/0 via-teal-500/0 to-teal-600/0 group-hover:from-teal-400/10 group-hover:via-teal-500/5 group-hover:to-teal-600/10 transition-all duration-500"></div>
                 
                 <div className="relative aspect-square overflow-hidden">
@@ -1392,9 +1392,9 @@ const LandingPage: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.55 }}
               whileHover={{ y: -10, scale: 1.05 }}
-              className="group relative"
+              className="group relative h-full"
             >
-              <div className="relative backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-yellow-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-yellow-500/40">
+              <div className="relative h-full backdrop-blur-xl bg-white/10 dark:bg-black/30 rounded-2xl overflow-hidden border border-white/20 hover:border-yellow-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-yellow-500/40 flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-b from-yellow-400/0 via-yellow-500/0 to-yellow-600/0 group-hover:from-yellow-400/10 group-hover:via-yellow-500/5 group-hover:to-yellow-600/10 transition-all duration-500"></div>
                 
                 <div className="relative aspect-square overflow-hidden">

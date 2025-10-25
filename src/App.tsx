@@ -37,6 +37,7 @@ import StorePage from './pages/StorePage';
 import TermsPage from './pages/TermsPage';
 import TodoListPage from './pages/TodoListPage';
 import ContributionsPage from './pages/ContributionsPage';
+import HabitTrackerPage from './pages/HabitTrackerPage';
 
 function App() {
   return (
@@ -149,6 +150,13 @@ function App() {
                     <ProtectedRoute>
                       <Layout>
                         <TodoListPage />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/habits" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <HabitTrackerPage />
                       </Layout>
                     </ProtectedRoute>
                   } />

@@ -2,10 +2,14 @@ import { formatDistanceToNow } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Eye, Heart, MessageCircle, Send, Trash2, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useStoryComments, useStoryLike, useStoryManagement, useStoryViewing } from '../hooks/useStories';
 import { StoryGroup } from '../types';
+import ConfirmationModal from './ConfirmationModal';
+import { db } from '../firebase/config';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 interface StoryViewerProps {
   storyGroups: StoryGroup[];
@@ -24,11 +28,16 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
 }) => {
   const { language } = useLanguage();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [currentGroupIndex, setCurrentGroupIndex] = useState(initialGroupIndex);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(initialStoryIndex);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [progress, setProgress] = useState(0);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showViewers, setShowViewers] = useState(false);
+  const [viewers, setViewers] = useState<any[]>([]);
+  const [loadingViewers, setLoadingViewers] = useState(false);
 
   const currentGroup = storyGroups[currentGroupIndex];
   const currentStory = currentGroup?.stories[currentStoryIndex];
@@ -109,6 +118,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
     
     const success = await removeStory(currentStory.id);
     if (success) {
+      setShowDeleteConfirmation(false);
       if (onStoryUpdate) {
         onStoryUpdate();
       }
@@ -121,6 +131,51 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
     }
   };
 
+  const fetchViewers = async () => {
+    if (!currentStory?.viewedBy || currentStory.viewedBy.length === 0) {
+      setViewers([]);
+      return;
+    }
+
+    try {
+      setLoadingViewers(true);
+      const viewersData: any[] = [];
+      
+      // Fetch user data for each viewer in batches
+      const batchSize = 10;
+      for (let i = 0; i < currentStory.viewedBy.length; i += batchSize) {
+        const batch = currentStory.viewedBy.slice(i, i + batchSize);
+        const usersQuery = query(
+          collection(db, 'users'),
+          where('__name__', 'in', batch)
+        );
+        const snapshot = await getDocs(usersQuery);
+        snapshot.forEach(doc => {
+          viewersData.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+      }
+      
+      setViewers(viewersData);
+    } catch (error) {
+      console.error('Error fetching viewers:', error);
+    } finally {
+      setLoadingViewers(false);
+    }
+  };
+
+  const handleShowViewers = () => {
+    setShowViewers(true);
+    fetchViewers();
+  };
+
+  const handleViewerClick = (viewerId: string) => {
+    navigate(`/profile/${viewerId}`);
+    onClose();
+  };
+
   if (!currentStory) {
     return null;
   }
@@ -128,7 +183,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
   return (
     <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
       {/* Story Progress Bars */}
-      <div className="absolute top-4 left-4 right-4 flex space-x-1 z-10">
+      <div className="absolute top-4 left-4 right-4 flex space-x-1 z-20">
         {currentGroup.stories.map((_, index) => (
           <div key={index} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
             <div
@@ -143,7 +198,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
       </div>
 
       {/* Story Header */}
-      <div className="absolute top-8 left-4 right-4 flex items-center justify-between z-10">
+      <div className="absolute top-8 left-4 right-4 flex items-center justify-between z-20">
         <div className="flex items-center space-x-3">
           <img
             src={currentStory.userAvatar}
@@ -161,7 +216,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
         <div className="flex items-center space-x-2">
           {isStoryAuthor && (
             <button
-              onClick={handleDeleteStory}
+              onClick={() => setShowDeleteConfirmation(true)}
               disabled={deleteLoading}
               className="p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors"
             >
@@ -232,7 +287,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
       )}
 
       {/* Story Actions */}
-      <div className="absolute bottom-4 left-4 right-4 z-10">
+      <div className="absolute bottom-4 left-4 right-4 z-20">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Like Button */}
@@ -254,10 +309,20 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
             </button>
 
             {/* Views Count */}
-            <div className="flex items-center space-x-2 text-white/80">
-              <Eye className="w-5 h-5" />
-              <span>{currentStory.views}</span>
-            </div>
+            {isStoryAuthor ? (
+              <button
+                onClick={handleShowViewers}
+                className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors"
+              >
+                <Eye className="w-5 h-5" />
+                <span>{currentStory.views}</span>
+              </button>
+            ) : (
+              <div className="flex items-center space-x-2 text-white/80">
+                <Eye className="w-5 h-5" />
+                <span>{currentStory.views}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -374,6 +439,109 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
                 </div>
               </form>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirmation}
+        onClose={() => setShowDeleteConfirmation(false)}
+        onConfirm={handleDeleteStory}
+        title={language === 'ar' ? 'حذف القصة' : 'Delete Story'}
+        message={language === 'ar' 
+          ? 'هل أنت متأكد من حذف هذه القصة؟ لا يمكن التراجع عن هذا الإجراء.' 
+          : 'Are you sure you want to delete this story? This action cannot be undone.'}
+        confirmText={language === 'ar' ? 'حذف' : 'Delete'}
+        cancelText={language === 'ar' ? 'إلغاء' : 'Cancel'}
+        isLoading={deleteLoading}
+        type="danger"
+      />
+
+      {/* Viewers Modal */}
+      <AnimatePresence>
+        {showViewers && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+            onClick={() => setShowViewers(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Eye className="w-6 h-6 text-green-500" />
+                  {language === 'ar' ? 'المشاهدات' : 'Viewers'}
+                </h2>
+                <button
+                  onClick={() => setShowViewers(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {loadingViewers ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+                </div>
+              ) : viewers.length === 0 ? (
+                <div className="text-center py-12">
+                  <Eye className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {language === 'ar' ? 'لا توجد مشاهدات بعد' : 'No views yet'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {viewers.map((viewer) => (
+                    <motion.button
+                      key={viewer.id}
+                      onClick={() => handleViewerClick(viewer.id)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full flex items-center gap-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all"
+                    >
+                      <img
+                        src={viewer.avatar || '/avatar.jpeg'}
+                        alt={viewer.name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                      <div className="flex-1 text-left">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                          {viewer.name}
+                        </h3>
+                        {viewer.username && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            @{viewer.username}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-green-500">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {language === 'ar' 
+                    ? `${viewers.length} ${viewers.length === 1 ? 'مشاهدة' : 'مشاهدات'}`
+                    : `${viewers.length} ${viewers.length === 1 ? 'view' : 'views'}`}
+                </p>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
