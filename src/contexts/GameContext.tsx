@@ -2,11 +2,11 @@ import React, { createContext, ReactNode, useContext } from 'react';
 import toast from 'react-hot-toast';
 import { createLevelUpNotification, createXPNotification } from '../firebase/notifications';
 import {
+    checkAndUpdateStreak,
     incrementCompletedTasks,
     incrementReadVerses,
     updateFocusHours,
     updateUserLevel,
-    updateUserStreak,
     updateUserXP
 } from '../firebase/userProfile';
 import { useAuth } from './AuthContext';
@@ -83,9 +83,25 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     if (!user) return;
 
     try {
-      const newStreak = user.streak + 1;
-      await updateUserStreak(user.id, newStreak);
-      await addXP(10, 'Daily streak maintained!');
+      // Use the new checkAndUpdateStreak function
+      const streakResult = await checkAndUpdateStreak(user.id);
+      
+      // If it's a new day and streak was updated, give XP bonus
+      if (streakResult.isNewDay) {
+        await addXP(10, `🔥 Daily streak: ${streakResult.streak} days!`);
+        
+        // Show special toast for streak milestones
+        if (streakResult.streak === 7) {
+          toast.success('🎉 7-day streak! You\'re on fire!', { duration: 4000 });
+        } else if (streakResult.streak === 30) {
+          toast.success('🏆 30-day streak! Incredible dedication!', { duration: 4000 });
+        } else if (streakResult.streak === 100) {
+          toast.success('👑 100-day streak! You\'re a legend!', { duration: 5000 });
+        }
+      }
+      
+      // Refresh user data
+      await refreshUser();
     } catch (error) {
       console.error('Error updating streak:', error);
       toast.error('Failed to update streak');
@@ -98,6 +114,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     try {
       await incrementReadVerses(user.id);
       await addXP(5, 'Verse read');
+      
+      // Check and update streak on any activity
+      await checkAndUpdateStreak(user.id);
+      await refreshUser();
     } catch (error) {
       console.error('Error marking verse read:', error);
       toast.error('Failed to update verse count');
@@ -110,6 +130,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     try {
       await incrementCompletedTasks(user.id);
       await addXP(15, 'Task completed');
+      
+      // Check and update streak on any activity
+      await checkAndUpdateStreak(user.id);
+      await refreshUser();
     } catch (error) {
       console.error('Error completing task:', error);
       toast.error('Failed to update task count');
@@ -122,6 +146,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     try {
       await updateFocusHours(user.id, hours);
       await addXP(Math.floor(hours * 20), 'Focus session completed');
+      
+      // Check and update streak on any activity
+      await checkAndUpdateStreak(user.id);
+      await refreshUser();
     } catch (error) {
       console.error('Error updating focus time:', error);
       toast.error('Failed to update focus time');

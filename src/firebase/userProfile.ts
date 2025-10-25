@@ -55,6 +55,82 @@ export const updateUserStreak = async (userId: string, newStreak: number) => {
   }
 };
 
+// Get today's date in YYYY-MM-DD format
+const getTodayDate = (): string => {
+  return new Date().toISOString().split('T')[0];
+};
+
+// Calculate days difference between two dates
+const getDaysDifference = (date1: string, date2: string): number => {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  const diffTime = Math.abs(d2.getTime() - d1.getTime());
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+};
+
+// Check and update user streak based on last active date
+export const checkAndUpdateStreak = async (userId: string): Promise<{ streak: number; isNewDay: boolean }> => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      return { streak: 0, isNewDay: false };
+    }
+
+    const userData = userDoc.data();
+    const currentStreak = userData.streak || 0;
+    const lastActiveDate = userData.lastActiveDate;
+    const todayDate = getTodayDate();
+
+    // If no last active date, this is the first day
+    if (!lastActiveDate) {
+      await updateDoc(userRef, {
+        streak: 1,
+        lastActiveDate: todayDate,
+      });
+      console.log('✅ First activity day! Streak: 1');
+      return { streak: 1, isNewDay: true };
+    }
+
+    // If user was already active today, don't update
+    if (lastActiveDate === todayDate) {
+      console.log('📅 Already active today. Streak:', currentStreak);
+      return { streak: currentStreak, isNewDay: false };
+    }
+
+    const daysDifference = getDaysDifference(lastActiveDate, todayDate);
+    
+    // If it's been exactly 1 day, increment streak
+    if (daysDifference === 1) {
+      const newStreak = currentStreak + 1;
+      await updateDoc(userRef, {
+        streak: newStreak,
+        lastActiveDate: todayDate,
+      });
+      console.log('🔥 Streak continued! New streak:', newStreak);
+      return { streak: newStreak, isNewDay: true };
+    }
+    
+    // If it's been more than 1 day, reset streak to 1
+    if (daysDifference > 1) {
+      await updateDoc(userRef, {
+        streak: 1,
+        lastActiveDate: todayDate,
+      });
+      console.log('💔 Streak broken after', daysDifference, 'days. Reset to 1');
+      return { streak: 1, isNewDay: true };
+    }
+
+    // Shouldn't reach here, but just in case
+    return { streak: currentStreak, isNewDay: false };
+  } catch (error) {
+    console.error('❌ Error checking/updating streak:', error);
+    throw error;
+  }
+};
+
 // Increment completed tasks
 export const incrementCompletedTasks = async (userId: string) => {
   try {
@@ -485,6 +561,49 @@ export const isFollowingUser = async (currentUserId: string, targetUserId: strin
   } catch (error) {
     console.error('Error checking follow status:', error);
     return false;
+  }
+};
+
+// Generate username from name if not exists
+const generateUsernameFromName = (name: string): string => {
+  return name.toLowerCase().replace(/\s+/g, '_');
+};
+
+// Get suggested users to follow (random users excluding current user and already following)
+export const getSuggestedUsers = async (currentUserId: string, maxUsers: number = 5) => {
+  try {
+    const usersQuery = query(
+      collection(db, 'users'),
+      limit(20) // Get more users to filter from
+    );
+    
+    const usersSnapshot = await getDocs(usersQuery);
+    const allUsers: User[] = [];
+    
+    // Get current user's following list
+    const currentUserDoc = await getDoc(doc(db, 'users', currentUserId));
+    const followingList = currentUserDoc.exists() ? (currentUserDoc.data().followingList || []) : [];
+    
+    usersSnapshot.forEach((userDoc) => {
+      const userData = userDoc.data() as User;
+      
+      // Exclude current user and users already following
+      if (userDoc.id !== currentUserId && !followingList.includes(userDoc.id)) {
+        allUsers.push({
+          ...userData,
+          id: userDoc.id,
+          // Generate username from name if not exists
+          username: userData.username || generateUsernameFromName(userData.name)
+        });
+      }
+    });
+    
+    // Shuffle array and get random users
+    const shuffled = allUsers.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, maxUsers);
+  } catch (error) {
+    console.error('Error getting suggested users:', error);
+    return [];
   }
 };
 

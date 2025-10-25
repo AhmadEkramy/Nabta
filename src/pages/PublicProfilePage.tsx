@@ -22,7 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getUserAchievements, getUserPosts, getUserProfile } from '../firebase';
 import { getAllCircles } from '../firebase/circles';
-import { followUser, isFollowingUser, unfollowUser } from '../firebase/userProfile';
+import { followUser, getUserByUsername, isFollowingUser, unfollowUser } from '../firebase/userProfile';
 import { Post, User } from '../types';
 
 type ReactionType = 'like' | 'laugh' | 'wow' | 'sad' | 'angry' | 'support';
@@ -38,6 +38,7 @@ const PublicProfilePage: React.FC = () => {
   const [userCircles, setUserCircles] = useState<any[]>([]);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actualUserId, setActualUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -46,24 +47,39 @@ const PublicProfilePage: React.FC = () => {
       try {
         setLoading(true);
 
+        // Check if userId is actually a username or an ID
+        // Username typically contains underscores or is shorter, ID is long alphanumeric
+        let resolvedUserId = userId;
+        
+        // If it looks like a username (contains underscore or is relatively short), try to get the actual ID
+        if (userId.includes('_') || userId.length < 20) {
+          const foundUserId = await getUserByUsername(userId);
+          if (foundUserId) {
+            resolvedUserId = foundUserId;
+          }
+        }
+
+        // Save the actual user ID
+        setActualUserId(resolvedUserId);
+
         // Fetch user profile
-        const profile = await getUserProfile(userId);
+        const profile = await getUserProfile(resolvedUserId);
         if (profile) {
           setProfileUser(profile);
 
           // Check if current user is following this user
-          if (currentUser?.id && currentUser.id !== userId) {
-            const followingStatus = await isFollowingUser(currentUser.id, userId);
+          if (currentUser?.id && currentUser.id !== resolvedUserId) {
+            const followingStatus = await isFollowingUser(currentUser.id, resolvedUserId);
             setIsFollowing(followingStatus);
           }
         }
 
         // Fetch user posts
-        const posts = await getUserPosts(userId);
+        const posts = await getUserPosts(resolvedUserId);
         setUserPosts(posts);
 
         // Fetch user achievements
-        const userAchievements = await getUserAchievements(userId);
+        const userAchievements = await getUserAchievements(resolvedUserId);
         setAchievements(userAchievements);
 
         // Fetch circles data
@@ -83,11 +99,11 @@ const PublicProfilePage: React.FC = () => {
   }, [userId, currentUser?.id]);
 
   const handleFollow = async () => {
-    if (!currentUser?.id || !userId || currentUser.id === userId) return;
+    if (!currentUser?.id || !actualUserId || currentUser.id === actualUserId) return;
 
     try {
       if (isFollowing) {
-        await unfollowUser(currentUser.id, userId);
+        await unfollowUser(currentUser.id, actualUserId);
         setIsFollowing(false);
         // Update local state
         if (profileUser) {
@@ -97,7 +113,7 @@ const PublicProfilePage: React.FC = () => {
           });
         }
       } else {
-        await followUser(currentUser.id, userId);
+        await followUser(currentUser.id, actualUserId);
         setIsFollowing(true);
         // Update local state
         if (profileUser) {

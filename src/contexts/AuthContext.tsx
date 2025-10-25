@@ -59,6 +59,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       xp: 0,
       level: 1,
       streak: 0,
+      lastActiveDate: new Date().toISOString().split('T')[0], // Set initial active date
       isAdmin: firebaseUser.email === 'admin@growthcircles.com',
       joinedAt: new Date().toISOString(),
       circles: [],
@@ -118,7 +119,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(tempProfile);
           }
         } else {
-          setUser(userProfile);
+          // Check and update streak when user logs in
+          try {
+            const { checkAndUpdateStreak } = await import('../firebase/userProfile');
+            const streakResult = await checkAndUpdateStreak(firebaseUser.uid);
+            
+            // If streak was updated, refresh user profile
+            if (streakResult.isNewDay) {
+              const updatedProfile = await getUserProfile(firebaseUser.uid);
+              if (updatedProfile) {
+                setUser(updatedProfile);
+                console.log('🔥 Streak updated on login:', streakResult.streak);
+              } else {
+                setUser(userProfile);
+              }
+            } else {
+              setUser(userProfile);
+            }
+          } catch (streakError) {
+            console.error('Error checking streak:', streakError);
+            // Still set user profile even if streak check fails
+            setUser(userProfile);
+          }
         }
       } else {
         // User is signed out

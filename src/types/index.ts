@@ -11,6 +11,7 @@ export interface User {
   xp: number;
   level: number;
   streak: number;
+  lastActiveDate?: string; // Last date user was active (YYYY-MM-DD format)
   isAdmin: boolean;
   joinedAt: string;
   circles: string[];

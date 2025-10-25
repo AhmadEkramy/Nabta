@@ -20,7 +20,9 @@ export { addComment, createPost } from './posts';
 export * from './quran';
 export * from './stories';
 export {
+    checkAndUpdateStreak,
     followUser,
+    getSuggestedUsers,
     getUserAchievements,
     getUserPosts,
     getUserProfile,

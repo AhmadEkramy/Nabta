@@ -7,9 +7,11 @@ import {
     Plus,
     Target,
     TrendingUp,
+    UserPlus,
     Users
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import CreatePost from '../components/CreatePost';
 import DailyVerse from '../components/DailyVerse';
@@ -19,12 +21,14 @@ import StoriesSection from '../components/StoriesSection';
 import { useAuth } from '../contexts/AuthContext';
 import { useGame } from '../contexts/GameContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { followUser, getSuggestedUsers } from '../firebase';
 import {
     useCreatePost,
     useHomeFeedPosts,
     useQuranProgress,
     useRecentActivity
 } from '../hooks/useHomePage';
+import { User } from '../types';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,12 +36,34 @@ const HomePage: React.FC = () => {
   const { language, t } = useLanguage();
   const { addXP } = useGame();
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
+  const [loadingSuggested, setLoadingSuggested] = useState(false);
+  const [followingUsers, setFollowingUsers] = useState<Set<string>>(new Set());
 
   // Use Firebase hooks for real data
   const { posts, loading: postsLoading, error: postsError, refreshPosts } = useHomeFeedPosts();
   const { activities, loading: activitiesLoading } = useRecentActivity();
-  const { createPost, loading: createPostLoading } = useCreatePost();
+  const { createPost } = useCreatePost();
   const { progress: quranProgress, loading: quranLoading } = useQuranProgress();
+
+  // Load suggested users
+  useEffect(() => {
+    const loadSuggestedUsers = async () => {
+      if (!user?.id) return;
+      
+      setLoadingSuggested(true);
+      try {
+        const users = await getSuggestedUsers(user.id, 5);
+        setSuggestedUsers(users);
+      } catch (error) {
+        console.error('Error loading suggested users:', error);
+      } finally {
+        setLoadingSuggested(false);
+      }
+    };
+
+    loadSuggestedUsers();
+  }, [user?.id]);
 
   const handleCreatePost = async (content: string, circleId?: string) => {
     try {
@@ -53,6 +79,37 @@ const HomePage: React.FC = () => {
       }
     } catch (error) {
       console.error('Error creating post:', error);
+    }
+  };
+
+  const handleFollowUser = async (targetUserId: string) => {
+    if (!user) return;
+
+    setFollowingUsers(prev => new Set(prev).add(targetUserId));
+
+    try {
+      await followUser(user.id, targetUserId, {
+        name: user.name,
+        avatar: user.avatar
+      });
+
+      toast.success(
+        language === 'ar' ? 'تمت المتابعة بنجاح!' : 'Successfully followed!',
+        { duration: 2000 }
+      );
+
+      // Remove from suggested list after following
+      setSuggestedUsers(prev => prev.filter(u => u.id !== targetUserId));
+    } catch (error) {
+      console.error('Error following user:', error);
+      toast.error(
+        language === 'ar' ? 'فشلت عملية المتابعة' : 'Failed to follow user'
+      );
+      setFollowingUsers(prev => {
+        const next = new Set(prev);
+        next.delete(targetUserId);
+        return next;
+      });
     }
   };
 
@@ -241,6 +298,72 @@ const HomePage: React.FC = () => {
                 <BookOpen className="w-5 h-5" />
                 <span>{language === 'ar' ? 'قراءة القرآن' : 'Read Quran'}</span>
               </button>
+            </div>
+          </motion.div>
+
+          {/* Suggested Users to Follow */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {language === 'ar' ? 'مستخدمون مقترحون' : 'Suggested Users'}
+            </h3>
+            <div className="space-y-3">
+              {loadingSuggested ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                </div>
+              ) : suggestedUsers.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {language === 'ar' ? 'لا يوجد مستخدمون مقترحون' : 'No suggestions available'}
+                  </p>
+                </div>
+              ) : (
+                suggestedUsers.map((suggestedUser) => (
+                  <div
+                    key={suggestedUser.id}
+                    className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <img
+                      src={suggestedUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(suggestedUser.name)}&background=random`}
+                      alt={suggestedUser.name}
+                      className="w-10 h-10 rounded-full object-cover flex-shrink-0 cursor-pointer"
+                      onClick={() => navigate(`/profile/${suggestedUser.username || suggestedUser.id}`)}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(suggestedUser.name)}&background=random`;
+                      }}
+                    />
+                    <div 
+                      className="flex-1 min-w-0 cursor-pointer"
+                      onClick={() => navigate(`/profile/${suggestedUser.username || suggestedUser.id}`)}
+                    >
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {suggestedUser.name}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {language === 'ar' ? 'مستوى' : 'Level'} {suggestedUser.level || 1} • {suggestedUser.xp || 0} {language === 'ar' ? 'نقطة' : 'XP'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleFollowUser(suggestedUser.id)}
+                      disabled={followingUsers.has(suggestedUser.id)}
+                      className="flex-shrink-0 p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      title={language === 'ar' ? 'متابعة' : 'Follow'}
+                    >
+                      {followingUsers.has(suggestedUser.id) ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <UserPlus className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </motion.div>
 
