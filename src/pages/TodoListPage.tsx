@@ -106,6 +106,18 @@ const TodoListPage: React.FC = () => {
     difficulty: 'medium'
   });
 
+  // Edit form state
+  const [editTodoForm, setEditTodoForm] = useState<CreateTodoData & { estimatedTime: number; difficulty: 'easy' | 'medium' | 'hard' }>({
+    title: '',
+    description: '',
+    priority: 'medium',
+    category: 'personal',
+    tags: [],
+    dueDate: undefined,
+    estimatedTime: 30,
+    difficulty: 'medium'
+  });
+
   // Categories - combine default categories with Firebase categories
   const defaultCategories = [
     { id: 'all', name: language === 'ar' ? 'جميع المهام' : 'All Tasks', color: 'gray' },
@@ -158,6 +170,22 @@ const TodoListPage: React.FC = () => {
     }));
     setTodos(todosWithDefaults);
   }, [firebaseTodos]);
+
+  // Populate edit form when todo is selected
+  useEffect(() => {
+    if (selectedTodo) {
+      setEditTodoForm({
+        title: selectedTodo.title,
+        description: selectedTodo.description || '',
+        priority: selectedTodo.priority,
+        category: selectedTodo.category,
+        tags: selectedTodo.tags || [],
+        dueDate: selectedTodo.dueDate,
+        estimatedTime: selectedTodo.estimatedTime || 30,
+        difficulty: selectedTodo.difficulty || 'medium'
+      });
+    }
+  }, [selectedTodo]);
 
   // Create default categories if none exist
   useEffect(() => {
@@ -343,6 +371,34 @@ const TodoListPage: React.FC = () => {
     } catch (error) {
       console.error('Error duplicating todo:', error);
       toast.error(language === 'ar' ? 'خطأ في نسخ المهمة' : 'Error duplicating task');
+    }
+  };
+
+  const saveEditedTodo = async () => {
+    if (!selectedTodo) return;
+    
+    if (!editTodoForm.title.trim()) {
+      toast.error(language === 'ar' ? 'يرجى إدخال عنوان المهمة' : 'Please enter task title');
+      return;
+    }
+
+    try {
+      const updateData = {
+        title: editTodoForm.title,
+        description: editTodoForm.description,
+        priority: editTodoForm.priority,
+        category: editTodoForm.category,
+        tags: editTodoForm.tags,
+        dueDate: editTodoForm.dueDate
+      };
+
+      await editTodo(selectedTodo.id, updateData);
+      setShowEditModal(false);
+      setSelectedTodo(null);
+      toast.success(language === 'ar' ? 'تم تحديث المهمة بنجاح' : 'Task updated successfully');
+    } catch (error) {
+      console.error('Error updating todo:', error);
+      toast.error(language === 'ar' ? 'خطأ في تحديث المهمة' : 'Error updating task');
     }
   };
 
@@ -953,6 +1009,165 @@ const TodoListPage: React.FC = () => {
                 className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
               >
                 {language === 'ar' ? 'إنشاء المهمة' : 'Create Task'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Edit Task Modal */}
+      {showEditModal && selectedTodo && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                {language === 'ar' ? 'تعديل المهمة' : 'Edit Task'}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setSelectedTodo(null);
+                }}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {language === 'ar' ? 'عنوان المهمة' : 'Task Title'} *
+                </label>
+                <input
+                  type="text"
+                  value={editTodoForm.title}
+                  onChange={(e) => setEditTodoForm({ ...editTodoForm, title: e.target.value })}
+                  placeholder={language === 'ar' ? 'أدخل عنوان المهمة...' : 'Enter task title...'}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {language === 'ar' ? 'الوصف' : 'Description'}
+                </label>
+                <textarea
+                  value={editTodoForm.description}
+                  onChange={(e) => setEditTodoForm({ ...editTodoForm, description: e.target.value })}
+                  placeholder={language === 'ar' ? 'أدخل وصف المهمة...' : 'Enter task description...'}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white resize-none"
+                  rows={3}
+                />
+              </div>
+
+              {/* Priority and Category */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {language === 'ar' ? 'الأولوية' : 'Priority'}
+                  </label>
+                  <select
+                    value={editTodoForm.priority}
+                    onChange={(e) => setEditTodoForm({ ...editTodoForm, priority: e.target.value as Todo['priority'] })}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="low">{language === 'ar' ? 'منخفض' : 'Low'}</option>
+                    <option value="medium">{language === 'ar' ? 'متوسط' : 'Medium'}</option>
+                    <option value="high">{language === 'ar' ? 'عالي' : 'High'}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {language === 'ar' ? 'الفئة' : 'Category'}
+                  </label>
+                  <select
+                    value={editTodoForm.category}
+                    onChange={(e) => setEditTodoForm({ ...editTodoForm, category: e.target.value })}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    {categories.filter(c => c.id !== 'all').map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Due Date and Difficulty */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {language === 'ar' ? 'تاريخ الاستحقاق' : 'Due Date'}
+                  </label>
+                  <input
+                    type="date"
+                    value={editTodoForm.dueDate ? editTodoForm.dueDate.toISOString().split('T')[0] : ''}
+                    onChange={(e) => setEditTodoForm({ 
+                      ...editTodoForm, 
+                      dueDate: e.target.value ? new Date(e.target.value) : undefined 
+                    })}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {language === 'ar' ? 'الصعوبة' : 'Difficulty'}
+                  </label>
+                  <select
+                    value={editTodoForm.difficulty}
+                    onChange={(e) => setEditTodoForm({ ...editTodoForm, difficulty: e.target.value as Todo['difficulty'] })}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="easy">{language === 'ar' ? 'سهل (10 XP)' : 'Easy (10 XP)'}</option>
+                    <option value="medium">{language === 'ar' ? 'متوسط (25 XP)' : 'Medium (25 XP)'}</option>
+                    <option value="hard">{language === 'ar' ? 'صعب (50 XP)' : 'Hard (50 XP)'}</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Estimated Time */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {language === 'ar' ? 'الوقت المقدر (بالدقائق)' : 'Estimated Time (minutes)'}
+                </label>
+                <input
+                  type="number"
+                  value={editTodoForm.estimatedTime}
+                  onChange={(e) => setEditTodoForm({ ...editTodoForm, estimatedTime: parseInt(e.target.value) || 30 })}
+                  min="5"
+                  max="480"
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end space-x-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setSelectedTodo(null);
+                }}
+                className="px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button
+                onClick={saveEditedTodo}
+                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+              >
+                {language === 'ar' ? 'حفظ التغييرات' : 'Save Changes'}
               </button>
             </div>
           </motion.div>

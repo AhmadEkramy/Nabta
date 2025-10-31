@@ -356,6 +356,170 @@ const ProfilePage: React.FC = () => {
         </div>
       </motion.div>
 
+      {/* Level Progress & Ranks Info */}
+      {!isLoading && displayUser && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg"
+        >
+          <div className="flex items-center space-x-3 mb-6">
+            <Trophy className="w-6 h-6 text-purple-500" />
+            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              {language === 'ar' ? 'المستوى والرتب' : 'Level & Ranks'}
+            </h3>
+          </div>
+
+          {/* Level Progress */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {language === 'ar' ? 'المستوى الحالي:' : 'Current Level:'} {displayUser.level}
+                </span>
+                <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                  ({(() => {
+                    const titles = {
+                      ar: ['مبتدئ', 'متعلم', 'متقدم', 'خبير', 'استاذ', 'عالم'],
+                      en: ['Beginner', 'Learner', 'Advanced', 'Expert', 'Master', 'Scholar']
+                    };
+                    const index = Math.min(Math.floor(displayUser.level / 5), titles[language as 'ar' | 'en'].length - 1);
+                    return titles[language as 'ar' | 'en'][index];
+                  })()})
+                </span>
+              </div>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {displayUser.xp} / {(displayUser.level) * 250} XP ({language === 'ar' ? 'للوصول للمستوى التالي' : 'to reach next level'})
+              </span>
+            </div>
+            
+            {/* Progress Bar */}
+            {(() => {
+              // النظام: Level = floor(XP / 250) + 1
+              // نحسب المستوى الفعلي بناءً على الـ XP الحالي
+              const actualLevel = Math.floor(displayUser.xp / 250) + 1;
+              const actualNextLevel = actualLevel + 1;
+              
+              // XP المطلوب للوصول للمستوى الحالي (الحد الأدنى)
+              const xpForCurrentLevel = (actualLevel - 1) * 250;
+              // XP المطلوب للوصول للمستوى التالي
+              const xpForNextLevel = actualLevel * 250;
+              
+              // التقدم داخل المستوى الحالي (من 0 إلى 250)
+              const xpProgress = displayUser.xp - xpForCurrentLevel;
+              // XP المتبقي للوصول للمستوى التالي
+              const xpRemaining = xpForNextLevel - displayUser.xp;
+              
+              // النسبة المئوية للتقدم (من 0% إلى 100%)
+              const progressPercent = Math.min(Math.max((xpProgress / 250) * 100, 0), 100);
+              
+              return (
+                <>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-2 relative">
+                    <div
+                      className="bg-gradient-to-r from-green-500 to-blue-500 h-4 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                      style={{ width: `${progressPercent}%`, minWidth: progressPercent > 0 ? '4px' : '0' }}
+                    >
+                      {progressPercent > 15 && (
+                        <span className="text-xs text-white font-medium">
+                          {Math.round(progressPercent)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-sm flex-wrap gap-2">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {language === 'ar' ? 'التقدم الحالي:' : 'Current Progress:'} {xpProgress} / 250 XP
+                    </span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {language === 'ar' 
+                        ? `تبقى ${xpRemaining} نقطة للوصول للمستوى ${actualNextLevel}`
+                        : `${xpRemaining} XP remaining for Level ${actualNextLevel}`
+                      }
+                    </span>
+                  </div>
+                  
+                  {actualLevel !== displayUser.level && (
+                    <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                      {language === 'ar' 
+                        ? `ملاحظة: المستوى الفعلي بناءً على XP هو ${actualLevel}`
+                        : `Note: Actual level based on XP is ${actualLevel}`
+                      }
+                    </p>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+
+          {/* Ranks Table */}
+          <div>
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {language === 'ar' ? 'جدول الرتب' : 'Ranks Table'}
+            </h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-gray-700">
+                    <th className="text-left py-3 px-4 text-gray-700 dark:text-gray-300 font-semibold">
+                      {language === 'ar' ? 'المستوى' : 'Level'}
+                    </th>
+                    <th className="text-left py-3 px-4 text-gray-700 dark:text-gray-300 font-semibold">
+                      {language === 'ar' ? 'XP المطلوب' : 'XP Required'}
+                    </th>
+                    <th className="text-left py-3 px-4 text-gray-700 dark:text-gray-300 font-semibold">
+                      {language === 'ar' ? 'الرتبة' : 'Rank'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const titles = {
+                      ar: ['مبتدئ', 'متعلم', 'متقدم', 'خبير', 'استاذ', 'عالم'],
+                      en: ['Beginner', 'Learner', 'Advanced', 'Expert', 'Master', 'Scholar']
+                    };
+                    const ranks = [];
+                    for (let level = 1; level <= 30; level++) {
+                      const xpRequired = (level - 1) * 250;
+                      const rankIndex = Math.min(Math.floor(level / 5), titles[language as 'ar' | 'en'].length - 1);
+                      const isCurrentLevel = level === displayUser.level;
+                      ranks.push(
+                        <tr
+                          key={level}
+                          className={`border-b border-gray-100 dark:border-gray-800 ${
+                            isCurrentLevel ? 'bg-green-50 dark:bg-green-900/20' : ''
+                          }`}
+                        >
+                          <td className="py-3 px-4">
+                            <span className={`font-medium ${isCurrentLevel ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                              {level}
+                              {isCurrentLevel && ' ✓'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{xpRequired}</td>
+                          <td className="py-3 px-4">
+                            <span className={`font-medium ${
+                              isCurrentLevel 
+                                ? 'text-green-600 dark:text-green-400' 
+                                : 'text-gray-700 dark:text-gray-300'
+                            }`}>
+                              {titles[language as 'ar' | 'en'][rankIndex]}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    }
+                    return ranks;
+                  })()}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {stats.map((stat, index) => (
