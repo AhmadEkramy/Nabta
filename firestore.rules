@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read and write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null; // Allow other users to read basic profile info
+    }
+    
+    // Posts rules
+    match /posts/{postId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.userId || // Post owner can update
+        request.auth.uid in resource.data.likedBy // Users can like/unlike
+      );
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // Comments subcollection
+      match /comments/{commentId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      }
+    }
+    
+    // Circles rules
+    match /circles/{circleId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid in resource.data.adminIds;
+    }
+    
+    // Notifications rules
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Quran verses rules
+    match /quranVerses/{verseId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Only admins should be able to write verses (handle via admin SDK)
+    }
+    
+    // Games rules
+    match /games/{gameId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Only admins should be able to manage games
+    }
+    
+    // User game progress
+    match /userGameProgress/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Todo lists
+    match /todos/{todoId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+  }
+}
