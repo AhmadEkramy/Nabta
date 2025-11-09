@@ -87,7 +87,7 @@ const Sidebar: React.FC = () => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="h-full w-full bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 transition-colors duration-300 overflow-y-auto">
+      <div className="hidden lg:block h-full w-full bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 transition-colors duration-300 overflow-y-auto">
         <div className="p-6">
           <nav className="space-y-2">
             {navItems.map((item) => (
@@ -111,7 +111,7 @@ const Sidebar: React.FC = () => {
       </div>
 
       {/* Mobile/Tablet Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-40 lg:hidden transition-colors duration-300">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-40 transition-colors duration-300">
         <nav className="flex justify-between items-center h-16 px-2">
           {primaryNavItems.map((item) => (
             <NavLink
