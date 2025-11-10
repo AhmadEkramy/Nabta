@@ -7,7 +7,7 @@
   
   [![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-  [![Firebase](https://img.shields.io/badge/Firebase-10.x-orange.svg)](https://firebase.google.com/)
+  [![Firebase](https://img.shields.io/badge/Firebase-12.x-orange.svg)](https://firebase.google.com/)
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.x-38B2AC.svg)](https://tailwindcss.com/)
   [![Vite](https://img.shields.io/badge/Vite-5.x-646CFF.svg)](https://vitejs.dev/)
 </div>
@@ -26,37 +26,52 @@
 - **Growth Circles (نبتة)**: Join specialized circles for languages, programming, health, and more
 - **Real-time Chat**: Connect with circle members through text and voice messages
 - **Posts & Stories**: Share your journey with the community
-- **Reactions & Comments**: Engage with community content
+- **Reactions & Comments**: Engage with community content (text, emoji, and voice comments)
 - **User Profiles**: Customizable profiles with avatars and bios
+- **Follow System**: Follow users and see suggested users
+- **Shared Posts**: Share posts across circles
 
 ### 🎯 Personal Development
 - **Focus Modes**: Productivity, meditation, and deep focus sessions with XP rewards
 - **Todo List**: Organize tasks and track daily progress
 - **Habit Tracker**: Build and maintain positive habits with point rewards
 - **Weekly Goals**: AI-suggested goals based on your progress
+- **Daily Log**: Track your daily activities and reflections
+- **Streak Tracking**: Maintain daily activity streaks for rewards
 
 ### 🎮 Gamification & XP System
 - **25 Progress Levels**: Unique titles and achievements
 - **XP Points**: Earn points through activities and achievements
+- **Streak System**: Daily activity tracking with streak rewards
 - **Interactive Games**: 
   - Pattern Memory Game
+  - Memory Card Game
   - Tic-Tac-Toe
   - Chess
   - Sudoku
-  - And more!
+  - Logic Puzzle Game
+  - Math Quiz Game
+  - Vocabulary Game
+  - Word Scramble Game
 - **Leaderboards**: Compete with friends and community
+- **Game Statistics**: Track your performance across all games
 
 ### 🤖 AI Coach
-- Smart personal coach that analyzes your progress
-- Weekly goal suggestions
-- Personalized recommendations
-- Progress tracking and insights
+- **Interactive Chat Interface**: Real-time conversation with AI coach powered by Groq API
+- **Smart Personal Coach**: Analyzes your progress and provides personalized guidance
+- **Suggested Prompts**: Quick-start prompts for common goals and challenges
+- **Weekly Goal Suggestions**: AI-generated goal recommendations based on your progress
+- **Personalized Recommendations**: Tailored advice for personal development
+- **Progress Tracking & Insights**: Get intelligent insights on your goals and achievements
+- **Conversation History**: Maintain context across multiple sessions
+- **Bilingual Support**: Full Arabic and English support for AI conversations
 
-### 📖 Quran Integration
-- Daily verse with translations
-- Progress tracking for Quran reading
-- Beautiful verse display with audio
-- Multi-language support
+### 📖 Sacred Texts Integration
+- **Quran**: Daily verse with translations, progress tracking, beautiful verse display with audio
+- **Bible**: Complete Bible (66 books) in Arabic and English, progress tracking, verse navigation
+- Multi-language support (Arabic/English)
+- Reading position tracking
+- Streak system for daily reading
 
 ### 💪 Health Tracking
 - **Nutrition Tracker**: Log meals and track calories
@@ -100,9 +115,12 @@
 - **Firebase Functions** - Serverless functions
 - **Firebase Hosting** - Web hosting
 
-### APIs
+### APIs & AI
 - **Quran API** - Holy Quran verses and translations
-- **OpenAI API** - AI coaching features
+- **Bible API** - Bible verses and translations
+- **Groq API** - AI coaching chat interface (Llama 3.1 model)
+- **Google Generative AI** - AI coaching features
+- **Genkit AI** - AI framework integration
 
 ---
 
@@ -178,14 +196,18 @@ firebase deploy
 
 ## 📱 Usage
 
-1. **Sign Up/Login**: Create an account or sign in
-2. **Complete Profile**: Add your information and avatar
+1. **Sign Up/Login**: Create an account or sign in with email/password
+2. **Complete Profile**: Add your information, avatar, and bio
 3. **Join Circles**: Find and join growth circles that interest you
 4. **Set Goals**: Start with daily todos and habits
 5. **Track Progress**: Monitor your health, activities, and achievements
-6. **Engage**: Post, comment, and connect with the community
-7. **Level Up**: Earn XP and unlock achievements
-8. **Stay Consistent**: Use the AI coach for personalized guidance
+6. **Read Sacred Texts**: Daily verses from Quran and Bible with progress tracking
+7. **Play Games**: Challenge yourself with 9 different games and earn XP
+8. **Engage**: Post, comment, react, and connect with the community
+9. **Level Up**: Earn XP and unlock achievements across 25 levels
+10. **Stay Consistent**: Use the AI coach for personalized guidance and maintain streaks
+11. **Follow Users**: Discover and follow other users in the community
+12. **Share Stories**: Create and share stories with your circles
 
 ---
 
@@ -269,24 +291,32 @@ Special thanks to the creative minds who contributed amazing ideas:
 
 ```
 nabta-growth-circles/
-├── public/                 # Static assets
+├── public/                 # Static assets (images, logos, JSON data)
 ├── src/
 │   ├── components/        # React components
 │   │   ├── admin/        # Admin dashboard components
-│   │   ├── games/        # Game components
+│   │   ├── games/        # Game components (9 games)
 │   │   └── health/       # Health tracking components
-│   ├── contexts/         # React contexts
+│   ├── contexts/         # React contexts (Auth, Game, Language, Theme, etc.)
 │   ├── firebase/         # Firebase configuration and services
 │   ├── hooks/            # Custom React hooks
 │   ├── pages/            # Page components
-│   ├── types/            # TypeScript types
-│   ├── utils/            # Utility functions
+│   ├── types/            # TypeScript type definitions
+│   ├── utils/            # Utility functions (Quran, Bible APIs, etc.)
+│   ├── services/         # External service integrations
+│   ├── data/             # Mock data and seed data
 │   ├── App.tsx           # Main app component
 │   └── main.tsx          # Entry point
 ├── functions/            # Firebase Cloud Functions
+│   ├── src/              # Functions source code
+│   └── package.json      # Functions dependencies
 ├── firestore.rules       # Firestore security rules
-├── package.json
-└── README.md
+├── vercel.json           # Vercel deployment configuration
+├── vite.config.ts        # Vite configuration
+├── tailwind.config.js    # Tailwind CSS configuration
+├── tsconfig.json         # TypeScript configuration
+├── package.json          # Project dependencies
+└── README.md             # Project documentation
 ```
 
 ---
@@ -298,6 +328,9 @@ nabta-growth-circles/
 - Input validation and sanitization
 - Secure file upload with Storage rules
 - Environment variables for sensitive data
+- Protected routes for authenticated users
+- Admin role-based access control
+- Secure API key management
 
 ---
 
@@ -333,6 +366,9 @@ Language can be toggled throughout the interface with automatic RTL support for 
 - [ ] Rewards store
 - [ ] Integration with wearables
 - [ ] More language support
+- [ ] Enhanced Bible features (audio, bookmarks)
+- [ ] Advanced analytics dashboard
+- [ ] Export/import user data
 
 ---
 
