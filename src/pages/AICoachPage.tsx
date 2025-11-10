@@ -1,17 +1,24 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Bot, TrendingUp, Target, Lightbulb, MessageCircle, Send, Loader2, Sparkles, BookOpen, Brain, Zap, Rocket } from 'lucide-react';
+import { Bot, TrendingUp, Target, Lightbulb, Send, Loader2, Sparkles, BookOpen, Brain, Zap, Rocket } from 'lucide-react';
 import { getGroqResponse, ChatMessage } from '../services/groqAPI';
+
+interface Message {
+  id: number;
+  type: 'ai' | 'user';
+  content: string;
+  timestamp: string;
+}
 
 const AICoachPage: React.FC = () => {
   const { language, t } = useLanguage();
   const [chatInput, setChatInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
+  const [chatMessages, setChatMessages] = useState<Message[]>([
     {
       id: 1,
-      type: 'ai' as const,
+      type: 'ai',
       content: language === 'ar' ? 
         'مرحباً! أنا مدربك الشخصي الذكي. كيف يمكنني مساعدتك اليوم في رحلة النمو الشخصي؟' :
         'Hello! I\'m your AI personal coach. How can I help you today on your personal growth journey?',
@@ -72,16 +79,16 @@ const AICoachPage: React.FC = () => {
 
 
   const handleSendMessage = async (messageText?: string) => {
-    const textToSend = messageText || chatInput.trim();
+    const textToSend = messageText || chatInput;
     if (textToSend && !isLoading) {
-      const userMessageText = textToSend.trim();
+      const userMessageText = String(textToSend).trim();
       setChatInput('');
       setIsLoading(true);
 
       // Add user message immediately
-      const userMessage = {
+      const userMessage: Message = {
         id: chatMessages.length + 1,
-        type: 'user' as const,
+        type: 'user',
         content: userMessageText,
         timestamp: new Date().toISOString()
       };
@@ -107,9 +114,9 @@ const AICoachPage: React.FC = () => {
         const aiResponseText = await getGroqResponse(conversationHistory, language);
 
         // Add AI response
-        const aiResponse = {
+        const aiResponse: Message = {
           id: chatMessages.length + 2,
-          type: 'ai' as const,
+          type: 'ai',
           content: aiResponseText,
           timestamp: new Date().toISOString()
         };
@@ -118,9 +125,9 @@ const AICoachPage: React.FC = () => {
       } catch (error) {
         console.error('Error getting AI response:', error);
         // Show error message
-        const errorMessage = {
+        const errorMessage: Message = {
           id: chatMessages.length + 2,
-          type: 'ai' as const,
+          type: 'ai',
           content: language === 'ar' 
             ? 'عذراً، حدث خطأ في الاتصال بالمدرب الذكي. يرجى المحاولة مرة أخرى.' 
             : 'Sorry, there was an error connecting to the AI coach. Please try again.',
@@ -166,7 +173,7 @@ const AICoachPage: React.FC = () => {
       y: 0,
       transition: {
         duration: 0.6,
-        ease: [0.6, -0.05, 0.01, 0.99]
+        ease: [0.6, -0.05, 0.01, 0.99] as const
       }
     }
   };
@@ -306,13 +313,6 @@ const AICoachPage: React.FC = () => {
                       "0 0 10px rgba(168, 85, 247, 0.4)"
                     ]
                   }}
-                  transition={{
-                    boxShadow: {
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }
-                  }}
                 >
                   <Bot className="w-5 h-5 text-white relative z-10" />
                 </motion.div>
@@ -348,7 +348,7 @@ const AICoachPage: React.FC = () => {
                       transition={{ 
                         duration: 0.4,
                         delay: index * 0.05,
-                        ease: [0.6, -0.05, 0.01, 0.99]
+                        ease: [0.6, -0.05, 0.01, 0.99] as const
                       }}
                       className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
@@ -431,7 +431,7 @@ const AICoachPage: React.FC = () => {
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 />
                 <motion.button
-                  onClick={handleSendMessage}
+                  onClick={() => handleSendMessage()}
                   disabled={isLoading || !chatInput.trim()}
                   className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg relative overflow-hidden shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   whileHover={!isLoading && chatInput.trim() ? { 
@@ -560,7 +560,7 @@ const AICoachPage: React.FC = () => {
                         <Icon className={`w-4 h-4 ${action.iconColor}`} />
                       </motion.div>
                       <span className="text-sm text-gray-900 dark:text-white font-medium">
-                        {action.text}
+                        {String(action.text || '')}
                       </span>
                     </div>
                   </motion.button>
@@ -637,7 +637,7 @@ const AICoachPage: React.FC = () => {
                 transition={{ 
                   delay: 0.8 + index * 0.1,
                   duration: 0.6,
-                  ease: [0.6, -0.05, 0.01, 0.99]
+                  ease: [0.6, -0.05, 0.01, 0.99] as const
                 }}
                 whileHover={{ 
                   scale: 1.05,
@@ -645,7 +645,6 @@ const AICoachPage: React.FC = () => {
                   boxShadow: "0 15px 30px rgba(0, 0, 0, 0.2)"
                 }}
                 whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 className={`p-5 rounded-xl relative overflow-hidden border-2 ${promptColorClasses[promptItem.color as keyof typeof promptColorClasses]} shadow-md group/prompt cursor-pointer text-left`}
                 disabled={isLoading}
               >
@@ -692,7 +691,7 @@ const AICoachPage: React.FC = () => {
                     }`} />
                   </motion.div>
                   <p className="text-sm font-medium leading-relaxed relative z-10 flex-1">
-                    {promptItem.prompt}
+                    {String(promptItem.prompt || '')}
                   </p>
                   <motion.div
                     className="flex-shrink-0 opacity-0 group-hover/prompt:opacity-100 transition-opacity"
