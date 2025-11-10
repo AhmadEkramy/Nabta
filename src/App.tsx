@@ -39,6 +39,7 @@ import TermsPage from './pages/TermsPage';
 import TodoListPage from './pages/TodoListPage';
 import ContributionsPage from './pages/ContributionsPage';
 import HabitTrackerPage from './pages/HabitTrackerPage';
+import TimeLimitExceededPage from './pages/TimeLimitExceededPage';
 
 function App() {
   return (
@@ -229,6 +230,11 @@ function App() {
                       <Layout>
                         <SettingsPage />
                       </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/time-limit-exceeded" element={
+                    <ProtectedRoute>
+                      <TimeLimitExceededPage />
                     </ProtectedRoute>
                   } />
                 </Routes>

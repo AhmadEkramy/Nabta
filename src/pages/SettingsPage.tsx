@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import {
     Bell,
     BookOpen,
+    Clock,
     Edit3,
     Globe,
     Lock,
@@ -34,12 +35,25 @@ import {
     updateUserPreferences
 } from '../firebase/userSettings';
 import { syncUserQuranData } from '../firebase/syncQuranData';
+import {
+  getRemainingTime,
+  initializeDailyUsage,
+  updateDailyUsage,
+  formatTime,
+  formatTimeArabic
+} from '../utils/timeTracking';
 
 // User Settings Interface
 interface UserSettings {
   notifications: {
     push: boolean;
     email: boolean;
+  };
+  preferences?: {
+    theme?: string;
+    language?: string;
+    religion?: 'muslim' | 'christian';
+    dailyTimeLimit?: 'unlimited' | '1min' | '1hour';
   };
 }
 
@@ -88,6 +102,7 @@ const SettingsPage: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [syncingQuranData, setSyncingQuranData] = useState(false);
+  const [remainingTime, setRemainingTime] = useState<number>(Infinity);
 
   // Load user settings from Firebase
   useEffect(() => {
@@ -115,6 +130,7 @@ const SettingsPage: React.FC = () => {
             theme: firebaseSettings.preferences?.theme || 'system',
             language: firebaseSettings.preferences?.language || 'en',
             religion: firebaseSettings.preferences?.religion || 'muslim',
+            dailyTimeLimit: firebaseSettings.preferences?.dailyTimeLimit || 'unlimited',
           },
         });
       } catch (error) {
@@ -124,6 +140,33 @@ const SettingsPage: React.FC = () => {
 
     loadUserSettings();
   }, [user?.id]);
+
+  // Update remaining time countdown
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // Initialize daily usage tracking
+    initializeDailyUsage(user.id);
+
+    const updateRemainingTime = () => {
+      const timeLimit = userSettings.preferences?.dailyTimeLimit || 'unlimited';
+      if (timeLimit !== 'unlimited') {
+        updateDailyUsage(user.id);
+        const remaining = getRemainingTime(user.id, timeLimit);
+        setRemainingTime(remaining);
+      } else {
+        setRemainingTime(Infinity);
+      }
+    };
+
+    // Update immediately
+    updateRemainingTime();
+
+    // Update every second
+    const interval = setInterval(updateRemainingTime, 1000);
+
+    return () => clearInterval(interval);
+  }, [user?.id, userSettings.preferences?.dailyTimeLimit]);
 
   // Handler functions
   const handleProfileUpdate = async () => {
@@ -428,6 +471,38 @@ const SettingsPage: React.FC = () => {
               );
             }
           }
+        },
+        {
+          icon: <Clock className="w-4 h-4" />,
+          label: language === 'ar' ? 'الحد اليومي لاستخدام الموقع' : 'Daily Time Limit',
+          action: 'select',
+          value: userSettings.preferences?.dailyTimeLimit || 'unlimited',
+          options: [
+            { value: 'unlimited', label: language === 'ar' ? 'لانهائي' : 'Unlimited' },
+            { value: '1min', label: language === 'ar' ? 'دقيقة واحدة' : '1 Minute' },
+            { value: '1hour', label: language === 'ar' ? 'ساعة واحدة' : '1 Hour' }
+          ],
+          onChange: async (value: 'unlimited' | '1min' | '1hour') => {
+            if (!user?.id) return;
+            try {
+              await updateUserPreferences(user.id, { dailyTimeLimit: value });
+              setUserSettings(prev => ({
+                ...prev,
+                preferences: {
+                  ...prev.preferences,
+                  dailyTimeLimit: value
+                }
+              }));
+              toast.success(
+                language === 'ar' ? 'تم تحديث الحد اليومي' : 'Daily time limit updated'
+              );
+            } catch (error) {
+              console.error('Error updating daily time limit:', error);
+              toast.error(
+                language === 'ar' ? 'خطأ في تحديث الحد اليومي' : 'Error updating daily time limit'
+              );
+            }
+          }
         }
       ]
     },
@@ -526,17 +601,39 @@ const SettingsPage: React.FC = () => {
                   )}
 
                   {item.action === 'select' && (
-                    <select
-                      value={item.value}
-                      onChange={(e) => item.onChange(e.target.value as 'muslim' | 'christian')}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
-                    >
-                      {item.options?.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex items-center gap-3">
+                      {item.label === (language === 'ar' ? 'الحد اليومي لاستخدام الموقع' : 'Daily Time Limit') && 
+                       userSettings.preferences?.dailyTimeLimit !== 'unlimited' && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                            {language === 'ar' ? 'المتبقي:' : 'Remaining:'}
+                          </span>
+                          <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                            {language === 'ar' 
+                              ? formatTimeArabic(remainingTime)
+                              : formatTime(remainingTime)}
+                          </span>
+                        </div>
+                      )}
+                      <select
+                        value={item.value}
+                        onChange={(e) => {
+                          if (item.label === (language === 'ar' ? 'الحد اليومي لاستخدام الموقع' : 'Daily Time Limit')) {
+                            item.onChange(e.target.value as 'unlimited' | '1min' | '1hour');
+                          } else {
+                            item.onChange(e.target.value as 'muslim' | 'christian');
+                          }
+                        }}
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+                      >
+                        {item.options?.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   )}
                 </div>
               ))}

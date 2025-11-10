@@ -2,6 +2,7 @@ import {
     deleteDoc,
     doc,
     getDoc,
+    getDocFromServer,
     setDoc,
     updateDoc,
 } from 'firebase/firestore';
@@ -17,6 +18,7 @@ export interface UserSettings {
     theme: 'light' | 'dark' | 'system';
     language: 'en' | 'ar';
     religion?: 'muslim' | 'christian';
+    dailyTimeLimit?: 'unlimited' | '1min' | '1hour'; // Daily time limit for site usage
   };
   createdAt?: Date;
   updatedAt?: Date;
@@ -32,14 +34,18 @@ export const defaultUserSettings: UserSettings = {
     theme: 'system',
     language: 'en',
     religion: 'muslim', // Default to muslim
+    dailyTimeLimit: 'unlimited', // Default to unlimited
   },
 };
 
-// Get user settings
-export const getUserSettings = async (userId: string): Promise<UserSettings> => {
+// Get user settings (with optional force server fetch)
+export const getUserSettings = async (userId: string, fromServer: boolean = false): Promise<UserSettings> => {
   try {
     const settingsRef = doc(db, 'userSettings', userId);
-    const settingsDoc = await getDoc(settingsRef);
+    // Use getDocFromServer if we need fresh data from server
+    const settingsDoc = fromServer 
+      ? await getDocFromServer(settingsRef)
+      : await getDoc(settingsRef);
 
     if (settingsDoc.exists()) {
       const data = settingsDoc.data();
@@ -56,6 +62,24 @@ export const getUserSettings = async (userId: string): Promise<UserSettings> => 
     }
   } catch (error) {
     console.error('Error getting user settings:', error);
+    // Fallback to regular getDoc if getDocFromServer fails
+    if (fromServer) {
+      try {
+        const settingsRef = doc(db, 'userSettings', userId);
+        const settingsDoc = await getDoc(settingsRef);
+        if (settingsDoc.exists()) {
+          const data = settingsDoc.data();
+          return {
+            ...defaultUserSettings,
+            ...data,
+            createdAt: data.createdAt?.toDate(),
+            updatedAt: data.updatedAt?.toDate(),
+          } as UserSettings;
+        }
+      } catch (fallbackError) {
+        console.error('Error in fallback getDoc:', fallbackError);
+      }
+    }
     return defaultUserSettings;
   }
 };
