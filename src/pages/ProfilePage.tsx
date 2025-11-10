@@ -665,7 +665,7 @@ const ProfilePage: React.FC = () => {
         <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
           <button
             onClick={() => setActiveTab('posts')}
-            className={`flex items-center justify-center space-x-2 py-4 px-6 font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-4 px-3 sm:px-6 font-medium transition-colors text-sm sm:text-base ${
               activeTab === 'posts'
                 ? 'text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -677,7 +677,7 @@ const ProfilePage: React.FC = () => {
           
           <button
             onClick={() => setActiveTab('shared')}
-            className={`flex items-center justify-center space-x-2 py-4 px-6 font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-4 px-3 sm:px-6 font-medium transition-colors text-sm sm:text-base ${
               activeTab === 'shared'
                 ? 'text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -689,7 +689,7 @@ const ProfilePage: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('about')}
-            className={`flex items-center justify-center space-x-2 py-4 px-6 font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-4 px-3 sm:px-6 font-medium transition-colors text-sm sm:text-base ${
               activeTab === 'about'
                 ? 'text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'

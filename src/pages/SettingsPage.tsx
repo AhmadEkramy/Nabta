@@ -32,7 +32,8 @@ import {
 } from '../firebase/userProfile';
 import {
     getUserSettings,
-    updateUserPreferences
+    updateUserPreferences,
+    toggleUserSetting
 } from '../firebase/userSettings';
 import { syncUserQuranData } from '../firebase/syncQuranData';
 import {
@@ -566,7 +567,11 @@ const SettingsPage: React.FC = () => {
               {section.items.map((item, itemIndex) => (
                 <div
                   key={itemIndex}
-                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  className={`flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg ${
+                    item.action === 'select' && item.label === (language === 'ar' ? 'الحد اليومي لاستخدام الموقع' : 'Daily Time Limit')
+                      ? 'flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-0'
+                      : ''
+                  }`}
                 >
                   <div className="flex items-center space-x-3">
                     {item.icon}
@@ -601,11 +606,11 @@ const SettingsPage: React.FC = () => {
                   )}
 
                   {item.action === 'select' && (
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                       {item.label === (language === 'ar' ? 'الحد اليومي لاستخدام الموقع' : 'Daily Time Limit') && 
                        userSettings.preferences?.dailyTimeLimit !== 'unlimited' && (
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                          <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800 w-full sm:w-auto justify-center sm:justify-start">
+                          <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                           <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
                             {language === 'ar' ? 'المتبقي:' : 'Remaining:'}
                           </span>
@@ -625,7 +630,7 @@ const SettingsPage: React.FC = () => {
                             item.onChange(e.target.value as 'muslim' | 'christian');
                           }
                         }}
-                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500"
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 w-full sm:w-auto"
                       >
                         {item.options?.map((option) => (
                           <option key={option.value} value={option.value}>
