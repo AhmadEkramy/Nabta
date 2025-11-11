@@ -31,6 +31,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import ProfilePage from './pages/ProfilePage';
 import PublicProfilePage from './pages/PublicProfilePage';
 import QuranPage from './pages/QuranPage';
+import BiblePage from './pages/BiblePage';
 import SettingsPage from './pages/SettingsPage';
 import SacredTextPage from './components/SacredTextPage';
 import SignupPage from './pages/SignupPage';
@@ -201,6 +202,13 @@ function App() {
                     <ProtectedRoute>
                       <Layout>
                         <SacredTextPage />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/bible" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <BiblePage />
                       </Layout>
                     </ProtectedRoute>
                   } />
