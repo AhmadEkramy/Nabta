@@ -341,7 +341,13 @@ export const getPostStats = async (postId: string) => {
 };
 
 // Update a post (only by post author)
-export const updatePost = async (postId: string, userId: string, newContent: string) => {
+export const updatePost = async (
+  postId: string, 
+  userId: string, 
+  newContent: string,
+  mediaUrl?: string,
+  mediaType?: 'image' | 'video'
+) => {
   try {
     const postRef = doc(db, 'posts', postId);
     const postDoc = await getDoc(postRef);
@@ -353,15 +359,34 @@ export const updatePost = async (postId: string, userId: string, newContent: str
     const postData = postDoc.data();
     
     // Check if user can edit (only post author)
-    if (postData.userId !== userId) {
+    // Posts in circles use 'authorId', regular posts use 'userId'
+    const postAuthorId = postData.userId || postData.authorId;
+    if (postAuthorId !== userId) {
       throw new Error('Not authorized to edit this post');
     }
     
-    // Update post content
-    await updateDoc(postRef, {
+    // Prepare update object
+    const updateData: any = {
       content: newContent,
       updatedAt: serverTimestamp(),
-    });
+    };
+
+    // Update media if provided
+    if (mediaUrl !== undefined) {
+      if (mediaUrl && mediaUrl.trim()) {
+        updateData.mediaUrl = mediaUrl.trim();
+        if (mediaType) {
+          updateData.mediaType = mediaType;
+        }
+      } else {
+        // Remove media if empty string
+        updateData.mediaUrl = null;
+        updateData.mediaType = null;
+      }
+    }
+    
+    // Update post
+    await updateDoc(postRef, updateData);
     
     return true;
   } catch (error) {
@@ -383,7 +408,9 @@ export const deletePost = async (postId: string, userId: string, isAdmin: boolea
     const postData = postDoc.data();
     
     // Check if user can delete (post author or admin)
-    if (!isAdmin && postData.userId !== userId) {
+    // Posts in circles use 'authorId', regular posts use 'userId'
+    const postAuthorId = postData.userId || postData.authorId;
+    if (!isAdmin && postAuthorId !== userId) {
       throw new Error('Not authorized to delete this post');
     }
     
@@ -429,7 +456,8 @@ export const deletePost = async (postId: string, userId: string, isAdmin: boolea
     
     // Update user's post count (for the post author, not the admin)
     try {
-      const postAuthorId = postData.userId;
+      // Posts in circles use 'authorId', regular posts use 'userId'
+      const postAuthorId = postData.userId || postData.authorId;
       if (postAuthorId) {
         const userRef = doc(db, 'users', postAuthorId);
         await updateDoc(userRef, {

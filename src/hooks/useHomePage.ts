@@ -241,7 +241,7 @@ export const useCreatePost = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createPost = async (content: string, circleId?: string) => {
+  const createPost = async (content: string, circleId?: string, mediaUrl?: string, mediaType?: 'image' | 'video') => {
     if (!user) {
       setError('User not authenticated');
       return null;
@@ -266,6 +266,8 @@ export const useCreatePost = () => {
         content,
         circleId,
         circleName,
+        mediaUrl,
+        mediaType,
       });
 
       return postId;

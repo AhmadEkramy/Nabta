@@ -9,8 +9,10 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { usePostLike, usePostManagement, usePostShare } from '../hooks/usePostInteractions';
 import { usePostReactions } from '../hooks/usePostReactions';
 import { Post } from '../types';
+import { isYouTubeUrl, getYouTubeEmbedUrl } from '../utils/youtube';
 import CommentsModal from './CommentsModal';
 import EditPostModal from './EditPostModal';
+import ImagePreviewModal from './ImagePreviewModal';
 import PostOptionsMenu from './PostOptionsMenu';
 import PostReactions from './PostReactions';
 
@@ -27,6 +29,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate }) => {
   const [showComments, setShowComments] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
   
   // Use Firebase-based reactions
   const {
@@ -83,8 +86,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate }) => {
     }
   };
 
-  const handleEditPost = async (newContent: string) => {
-    const success = await editPost(post.id, newContent);
+  const handleEditPost = async (newContent: string, mediaUrl?: string, mediaType?: 'image' | 'video') => {
+    const success = await editPost(post.id, newContent, mediaUrl, mediaType);
     if (success && onPostUpdate) {
       onPostUpdate(); // Refresh posts to show updated content
     }
@@ -157,7 +160,52 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate }) => {
 
       {/* Content */}
       <div className="mb-4">
-        <p className="text-gray-900 dark:text-white leading-relaxed">{post.content}</p>
+        {post.content && (
+          <p className="text-gray-900 dark:text-white leading-relaxed mb-4">{post.content}</p>
+        )}
+        
+        {/* Media (Image or Video) */}
+        {post.mediaUrl && post.mediaType && (
+          <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+            {post.mediaType === 'image' ? (
+              <img
+                src={post.mediaUrl}
+                alt="Post media"
+                className="w-full max-h-96 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowImageModal(true);
+                }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = 'https://via.placeholder.com/400x200?text=Image+Not+Found';
+                }}
+              />
+            ) : isYouTubeUrl(post.mediaUrl) ? (
+              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                <iframe
+                  src={getYouTubeEmbedUrl(post.mediaUrl) || post.mediaUrl}
+                  className="absolute top-0 left-0 w-full h-full"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="YouTube video player"
+                />
+              </div>
+            ) : (
+              <video
+                src={post.mediaUrl}
+                className="w-full max-h-96 object-cover"
+                controls
+                onError={(e) => {
+                  const target = e.target as HTMLVideoElement;
+                  target.poster = 'https://via.placeholder.com/400x200?text=Video+Not+Found';
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Reactions */}
@@ -196,9 +244,22 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdate }) => {
         <EditPostModal
           postId={post.id}
           currentContent={post.content}
+          currentMediaUrl={post.mediaUrl}
+          currentMediaType={post.mediaType}
           onClose={() => setShowEditModal(false)}
           onSave={handleEditPost}
           loading={managementLoading}
+        />
+      )}
+
+      {/* Image Preview Modal */}
+      {post.mediaUrl && post.mediaType === 'image' && (
+        <ImagePreviewModal
+          isOpen={showImageModal}
+          onClose={() => setShowImageModal(false)}
+          imageUrl={post.mediaUrl}
+          imageAlt={`${post.userName}'s post image`}
+          userName={post.userName}
         />
       )}
     </motion.div>

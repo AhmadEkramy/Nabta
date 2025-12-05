@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Droplet, Settings, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Droplet, Settings, TrendingUp, CheckCircle2, Trash2 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -386,34 +386,113 @@ const WaterTracker: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Small Glass */}
-            <button
+            <motion.button
               onClick={() => addWater(250)}
               className="text-left p-6 rounded-xl bg-gradient-to-b from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 transition-colors border border-blue-100"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <div className="text-blue-500 mb-3">💧</div>
-              <div className="font-semibold text-blue-900">Small Glass</div>
-              <div className="text-gray-600">250ml</div>
-            </button>
+              <div className="mb-4 flex justify-center">
+                <svg width="60" height="80" viewBox="0 0 60 80" className="text-blue-500">
+                  {/* Glass body */}
+                  <path
+                    d="M15 20 L15 70 Q15 75 20 75 L40 75 Q45 75 45 70 L45 20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                  {/* Water level */}
+                  <path
+                    d="M15 50 Q15 55 20 55 L40 55 Q45 55 45 50"
+                    fill="currentColor"
+                    fillOpacity="0.3"
+                  />
+                  {/* Glass rim */}
+                  <line x1="15" y1="20" x2="45" y2="20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                  {/* Handle */}
+                  <path
+                    d="M45 30 Q55 30 55 40 Q55 50 45 50"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <div className="font-semibold text-blue-900 dark:text-white">{text.smallGlass}</div>
+              <div className="text-gray-600 dark:text-gray-400">250ml</div>
+            </motion.button>
 
             {/* Medium Glass */}
-            <button
+            <motion.button
               onClick={() => addWater(500)}
               className="text-left p-6 rounded-xl bg-gradient-to-b from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 transition-colors border border-blue-100"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <div className="text-blue-500 mb-3">💧</div>
-              <div className="font-semibold text-blue-900">Medium Glass</div>
-              <div className="text-gray-600">500ml</div>
-            </button>
+              <div className="mb-4 flex justify-center">
+                <svg width="70" height="95" viewBox="0 0 70 95" className="text-blue-500">
+                  {/* Glass body */}
+                  <path
+                    d="M18 20 L18 80 Q18 85 25 85 L45 85 Q52 85 52 80 L52 20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                  {/* Water level */}
+                  <path
+                    d="M18 55 Q18 60 25 60 L45 60 Q52 60 52 55"
+                    fill="currentColor"
+                    fillOpacity="0.3"
+                  />
+                  {/* Glass rim */}
+                  <line x1="18" y1="20" x2="52" y2="20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                  {/* Handle */}
+                  <path
+                    d="M52 30 Q64 30 64 42 Q64 54 52 54"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <div className="font-semibold text-blue-900 dark:text-white">{text.mediumGlass}</div>
+              <div className="text-gray-600 dark:text-gray-400">500ml</div>
+            </motion.button>
 
             {/* Bottle */}
-            <button
+            <motion.button
               onClick={() => addWater(1000)}
               className="text-left p-6 rounded-xl bg-gradient-to-b from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 transition-colors border border-blue-100"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <div className="text-blue-500 mb-3">💧</div>
-              <div className="font-semibold text-blue-900">Bottle</div>
-              <div className="text-gray-600">1000ml</div>
-            </button>
+              <div className="mb-4 flex justify-center">
+                <svg width="50" height="100" viewBox="0 0 50 100" className="text-blue-500">
+                  {/* Bottle cap */}
+                  <rect x="20" y="5" width="10" height="8" rx="2" fill="currentColor" />
+                  {/* Bottle neck */}
+                  <rect x="22" y="13" width="6" height="12" fill="currentColor" />
+                  {/* Bottle body */}
+                  <path
+                    d="M15 25 L15 85 Q15 90 20 90 L30 90 Q35 90 35 85 L35 25 Q35 20 30 20 L20 20 Q15 20 15 25 Z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                  {/* Water level */}
+                  <rect x="15" y="50" width="20" height="35" fill="currentColor" fillOpacity="0.3" rx="5" />
+                  {/* Bottle label area */}
+                  <rect x="18" y="35" width="14" height="15" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2,2" opacity="0.5" />
+                </svg>
+              </div>
+              <div className="font-semibold text-blue-900 dark:text-white">{text.bottle}</div>
+              <div className="text-gray-600 dark:text-gray-400">1000ml</div>
+            </motion.button>
           </div>
 
           {/* Actions */}
@@ -583,8 +662,8 @@ const WaterTracker: React.FC = () => {
                   className={`p-4 border ${isDark ? 'border-gray-700' : 'border-gray-100'} rounded-lg flex items-center justify-between
                            hover:shadow-md transition-shadow backdrop-blur-sm`}
                 >
-                  <div>
-                    <h4 className="font-medium">{entry.amount}ml</h4>
+                  <div className="flex-1">
+                    <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{entry.amount}ml</h4>
                     <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                       {entry.timestamp.toLocaleTimeString()}
                     </p>
@@ -592,17 +671,38 @@ const WaterTracker: React.FC = () => {
                   <motion.button
                     onClick={async () => {
                       try {
-                        setEntries(entries.filter(e => e.id !== entry.id));
-                        if (log) await deleteWaterEntry(log.id, entry.id);
+                        // Optimistic UI update
+                        const newEntries = entries.filter(e => e.id !== entry.id);
+                        setEntries(newEntries);
+                        const optimisticTotal = newEntries.reduce((sum, e) => sum + e.amount, 0);
+                        updateWeekTodayLocal(optimisticTotal);
+                        
+                        // Delete from Firebase
+                        if (log) {
+                          await deleteWaterEntry(log.id, entry.id);
+                        }
+                        
+                        // Refresh weekly data
+                        if (user) {
+                          await refreshWeekly(user.id, optimisticTotal);
+                        }
                       } catch (e) {
                         console.error('Failed to delete water entry:', e);
                         setError('Failed to delete water entry');
+                        // Revert optimistic update on error
+                        setEntries(entries);
                       }
                     }}
-                    className="text-red-500 opacity-0 hover:opacity-100"
+                    className={`p-2 rounded-lg transition-colors ${
+                      isDark 
+                        ? 'text-red-400 hover:bg-red-900/30 hover:text-red-300' 
+                        : 'text-red-500 hover:bg-red-50 hover:text-red-600'
+                    }`}
                     whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    title={text.remove}
                   >
-                    {text.remove}
+                    <Trash2 className="w-5 h-5" />
                   </motion.button>
                 </motion.div>
               ))}
@@ -703,6 +803,30 @@ const WaterTracker: React.FC = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
+                  <div className="mb-2">
+                    <svg width="50" height="65" viewBox="0 0 60 80" className={isDark ? 'text-blue-400' : 'text-blue-500'}>
+                      <path
+                        d="M12 16 L12 56 Q12 60 15 60 L25 60 Q28 60 28 56 L28 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M12 40 Q12 42 15 42 L25 42 Q28 42 28 40"
+                        fill="currentColor"
+                        fillOpacity="0.3"
+                      />
+                      <line x1="12" y1="16" x2="28" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <path
+                        d="M28 24 Q36 24 36 32 Q36 40 28 40"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
                   <span className={`font-medium ${isDark ? 'text-blue-400' : 'text-blue-500'}`}>{text.smallGlass}</span>
                   <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>250ml</span>
                 </motion.button>
@@ -718,6 +842,30 @@ const WaterTracker: React.FC = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
+                  <div className="mb-2">
+                    <svg width="55" height="75" viewBox="0 0 70 95" className={isDark ? 'text-blue-400' : 'text-blue-500'}>
+                      <path
+                        d="M14 16 L14 64 Q14 68 18 68 L30 68 Q34 68 34 64 L34 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M14 44 Q14 48 18 48 L30 48 Q34 48 34 44"
+                        fill="currentColor"
+                        fillOpacity="0.3"
+                      />
+                      <line x1="14" y1="16" x2="34" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      <path
+                        d="M34 24 Q44 24 44 34 Q44 44 34 44"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
                   <span className={`font-medium ${isDark ? 'text-blue-400' : 'text-blue-500'}`}>{text.mediumGlass}</span>
                   <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>500ml</span>
                 </motion.button>
@@ -733,6 +881,21 @@ const WaterTracker: React.FC = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
+                  <div className="mb-2">
+                    <svg width="40" height="80" viewBox="0 0 50 100" className={isDark ? 'text-blue-400' : 'text-blue-500'}>
+                      <rect x="18" y="4" width="8" height="6" rx="1" fill="currentColor" />
+                      <rect x="20" y="10" width="4" height="10" fill="currentColor" />
+                      <path
+                        d="M12 20 L12 68 Q12 72 16 72 L24 72 Q28 72 28 68 L28 20 Q28 16 24 16 L16 16 Q12 16 12 20 Z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      <rect x="12" y="40" width="16" height="28" fill="currentColor" fillOpacity="0.3" rx="3" />
+                      <rect x="15" y="28" width="10" height="12" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="1.5,1.5" opacity="0.5" />
+                    </svg>
+                  </div>
                   <span className={`font-medium ${isDark ? 'text-blue-400' : 'text-blue-500'}`}>{text.bottle}</span>
                   <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>1000ml</span>
                 </motion.button>

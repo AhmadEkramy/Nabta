@@ -70,6 +70,8 @@ export interface Post {
   content: string;
   circleId?: string;
   circleName?: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
   createdAt: string;
   updatedAt?: string;
   sharedAt?: string;  // Added for shared posts

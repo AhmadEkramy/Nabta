@@ -81,12 +81,19 @@ export const getHomeFeedPosts = async (userId: string, userCircles: string[] = [
         content: data.content,
         circleId: data.circleId,
         circleName: data.circleName,
+        mediaUrl: data.mediaUrl,
+        mediaType: data.mediaType,
         createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
         likes: data.likes || 0,
         comments: data.comments || 0,
         shares: data.shares || 0,
-        likedBy: likedBy
+        likedBy: likedBy,
+        user: {
+          id: data.userId || data.authorId,
+          name: data.userName || data.authorName,
+          avatar: data.userAvatar || data.authorAvatar
+        }
       };
       
       // Include post if:
@@ -172,6 +179,8 @@ export const getHomeFeedPosts = async (userId: string, userCircles: string[] = [
             content: originalPostData.content,
             circleId: originalPostData.circleId,
             circleName: originalPostData.circleName,
+            mediaUrl: originalPostData.mediaUrl,
+            mediaType: originalPostData.mediaType,
             createdAt: originalPostData.createdAt?.toDate?.()?.toISOString() || originalPostData.createdAt,
             updatedAt: originalPostData.updatedAt?.toDate?.()?.toISOString() || originalPostData.updatedAt,
             likes: originalPostData.likes || 0,
@@ -183,6 +192,11 @@ export const getHomeFeedPosts = async (userId: string, userCircles: string[] = [
               userId: sharedByUserId,
               userName: sharedByUserName,
               userAvatar: sharedByUserAvatar
+            },
+            user: {
+              id: originalPostData.userId || originalPostData.authorId,
+              name: originalPostData.userName || originalPostData.authorName,
+              avatar: originalPostData.userAvatar || originalPostData.authorAvatar
             }
           };
           
@@ -883,6 +897,8 @@ export const createNewPost = async (postData: {
   content: string;
   circleId?: string;
   circleName?: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
 }) => {
   try {
     // Create the post document, only including defined fields
@@ -897,7 +913,9 @@ export const createNewPost = async (postData: {
       shares: 0,
       likedBy: [],
       ...(postData.circleId?.trim() ? { circleId: postData.circleId.trim() } : {}),
-      ...(postData.circleName?.trim() ? { circleName: postData.circleName.trim() } : {})
+      ...(postData.circleName?.trim() ? { circleName: postData.circleName.trim() } : {}),
+      ...(postData.mediaUrl?.trim() ? { mediaUrl: postData.mediaUrl.trim() } : {}),
+      ...(postData.mediaType ? { mediaType: postData.mediaType } : {})
     };
 
     const docRef = await addDoc(collection(db, 'posts'), postFields);

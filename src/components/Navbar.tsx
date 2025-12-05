@@ -44,7 +44,21 @@ const Navbar: React.FC = () => {
 
           {/* Mobile menu button */}
           <div className="flex items-center gap-4">
-            <div className="md:hidden">
+            <div className="md:hidden flex items-center gap-2">
+              {/* Notifications button - visible on mobile */}
+              <Link
+                to="/notifications"
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+              >
+                <Bell className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
+              
+              {/* Hamburger menu button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -200,22 +214,6 @@ const Navbar: React.FC = () => {
                     <Globe className="w-5 h-5" />
                     <span>{language === 'ar' ? 'English' : 'العربية'}</span>
                   </button>
-
-                  <Link
-                    to="/notifications"
-                    className="flex items-center space-x-3 rtl:space-x-reverse p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <div className="relative">
-                      <Bell className="w-5 h-5" />
-                      {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                          {unreadCount}
-                        </span>
-                      )}
-                    </div>
-                    <span>{t('notifications')}</span>
-                  </Link>
 
                   <button
                     onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}

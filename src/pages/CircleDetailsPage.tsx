@@ -100,32 +100,46 @@ const CircleDetailsPage: React.FC = () => {
 
             {/* Posts List */}
             <div className="space-y-6">
-              {posts?.map((post: CirclePost) => (
-                <PostCard
-                  key={post.id}
-                  post={{
-                    id: post.id,
-                    userId: post.authorId,
-                    userName: post.authorName,
-                    userAvatar: post.authorAvatar,
-                    content: post.content,
-                    circleId: post.circleId,
-                    createdAt: typeof post.createdAt === 'string' ? post.createdAt : new Date(post.createdAt.seconds * 1000).toISOString(),
-                    updatedAt: post.updatedAt,
-                    likes: post.likes,
-                    comments: post.comments,
-                    shares: 0,
-                    likedBy: Object.entries(post.likedBy || {})
-                      .filter(([, value]) => value)
-                      .map(([key]) => key),
-                    user: {
-                      id: post.authorId,
-                      name: post.authorName,
-                      avatar: post.authorAvatar
-                    }
-                  }}
-                />
-              ))}
+              {posts?.map((post: CirclePost) => {
+                // Safely handle createdAt timestamp
+                let createdAt: string;
+                if (!post.createdAt) {
+                  createdAt = new Date().toISOString();
+                } else if (typeof post.createdAt === 'string') {
+                  createdAt = post.createdAt;
+                } else if (typeof post.createdAt === 'object' && post.createdAt !== null && 'seconds' in post.createdAt && post.createdAt.seconds) {
+                  createdAt = new Date(post.createdAt.seconds * 1000).toISOString();
+                } else {
+                  createdAt = new Date().toISOString();
+                }
+
+                return (
+                  <PostCard
+                    key={post.id}
+                    post={{
+                      id: post.id,
+                      userId: post.authorId,
+                      userName: post.authorName,
+                      userAvatar: post.authorAvatar,
+                      content: post.content,
+                      circleId: post.circleId,
+                      createdAt: createdAt,
+                      updatedAt: post.updatedAt,
+                      likes: post.likes,
+                      comments: post.comments,
+                      shares: 0,
+                      likedBy: Object.entries(post.likedBy || {})
+                        .filter(([, value]) => value)
+                        .map(([key]) => key),
+                      user: {
+                        id: post.authorId,
+                        name: post.authorName,
+                        avatar: post.authorAvatar
+                      }
+                    }}
+                  />
+                );
+              })}
               {posts?.length === 0 && (
                 <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                   {language === 'ar' ? 'لا توجد منشورات بعد' : 'No posts yet'}

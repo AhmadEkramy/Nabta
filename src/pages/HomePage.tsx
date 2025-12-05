@@ -65,9 +65,9 @@ const HomePage: React.FC = () => {
     loadSuggestedUsers();
   }, [user?.id]);
 
-  const handleCreatePost = async (content: string, circleId?: string) => {
+  const handleCreatePost = async (content: string, circleId?: string, mediaUrl?: string, mediaType?: 'image' | 'video') => {
     try {
-      const postId = await createPost(content, circleId);
+      const postId = await createPost(content, circleId, mediaUrl, mediaType);
       if (postId) {
         await addXP(10, 'Post created');
         setShowCreatePost(false);

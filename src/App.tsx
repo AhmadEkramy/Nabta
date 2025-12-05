@@ -2,6 +2,7 @@ import { Toaster } from 'react-hot-toast';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import ScrollToTop from './components/ScrollToTop';
 import { AuthProvider } from './contexts/AuthContext';
 import { CircleProvider } from './contexts/CircleContext';
 import { GameProvider } from './contexts/GameContext';
@@ -51,6 +52,7 @@ function App() {
             <GameProvider>
             <CircleProvider>
               <Router>
+                <ScrollToTop />
                 <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
                   <Routes>
                   <Route path="/" element={<LandingPage />} />

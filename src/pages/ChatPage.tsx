@@ -23,6 +23,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Chat, ChatUser } from '../firebase/chats';
 import { useChatMessages, useChats, useOnlineStatus } from '../hooks/useChats';
+import { getFollowingList } from '../firebase/userProfile';
+import { User } from '../types';
 
 const ChatPage: React.FC = () => {
   const { user } = useAuth();
@@ -36,6 +38,9 @@ const ChatPage: React.FC = () => {
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
   const [callType, setCallType] = useState<'voice' | 'video'>('voice');
+  const [followingUsers, setFollowingUsers] = useState<ChatUser[]>([]);
+  const [loadingFollowing, setLoadingFollowing] = useState(false);
+  const [newChatSearchTerm, setNewChatSearchTerm] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Use Firebase hooks
@@ -214,6 +219,44 @@ const ChatPage: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showEmojiPicker]);
+
+  // Load following users when modal opens
+  useEffect(() => {
+    const loadFollowingUsers = async () => {
+      if (showNewChatModal && user?.id) {
+        setLoadingFollowing(true);
+        try {
+          const following = await getFollowingList(user.id);
+          // Convert User[] to ChatUser[]
+          const followingAsChatUsers: ChatUser[] = following.map((u: User) => ({
+            id: u.id,
+            name: u.name || u.email || 'Unknown',
+            avatar: u.avatar || '/avatar.jpeg',
+            email: u.email || ''
+          }));
+          setFollowingUsers(followingAsChatUsers);
+        } catch (error) {
+          console.error('Error loading following users:', error);
+          setFollowingUsers([]);
+        } finally {
+          setLoadingFollowing(false);
+        }
+      } else {
+        setFollowingUsers([]);
+        setNewChatSearchTerm('');
+      }
+    };
+
+    loadFollowingUsers();
+  }, [showNewChatModal, user?.id]);
+
+  // Handle search in new chat modal
+  const handleNewChatSearch = async (searchTerm: string) => {
+    setNewChatSearchTerm(searchTerm);
+    if (searchTerm.trim()) {
+      await searchForUsers(searchTerm);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto h-[calc(100vh-8rem)] bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
@@ -594,53 +637,102 @@ const ChatPage: React.FC = () => {
                   <input
                     type="text"
                     placeholder={language === 'ar' ? 'البحث عن المستخدمين...' : 'Search for users...'}
-                    onChange={(e) => searchForUsers(e.target.value)}
+                    value={newChatSearchTerm}
+                    onChange={(e) => handleNewChatSearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
               </div>
 
-              {/* Search Results */}
+              {/* Results - Show following users by default, search results when searching */}
               <div className="max-h-96 overflow-y-auto">
-                {searchLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
-                  </div>
-                ) : searchResults.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 px-4">
-                    <Users className="w-12 h-12 text-gray-400 mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400 text-center">
-                      {language === 'ar' ? 'ابحث عن المستخدمين لبدء محادثة' : 'Search for users to start a chat'}
-                    </p>
-                  </div>
+                {newChatSearchTerm.trim() ? (
+                  // Show search results when searching
+                  searchLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
+                    </div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 px-4">
+                      <Users className="w-12 h-12 text-gray-400 mb-4" />
+                      <p className="text-gray-500 dark:text-gray-400 text-center">
+                        {language === 'ar' ? 'لا توجد نتائج' : 'No results found'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 p-4">
+                      {searchResults.map((user, index) => (
+                        <motion.div
+                          key={user.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          onClick={() => handleStartNewChat(user)}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                        >
+                          <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {user.name}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {user.email}
+                            </p>
+                          </div>
+                          <MessageCircle className="w-5 h-5 text-gray-400" />
+                        </motion.div>
+                      ))}
+                    </div>
+                  )
                 ) : (
-                  <div className="space-y-2 p-4">
-                    {searchResults.map((user, index) => (
-                      <motion.div
-                        key={user.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        onClick={() => handleStartNewChat(user)}
-                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                      >
-                        <img
-                          src={user.avatar}
-                          alt={user.name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {user.name}
-                          </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {user.email}
-                          </p>
-                        </div>
-                        <MessageCircle className="w-5 h-5 text-gray-400" />
-                      </motion.div>
-                    ))}
-                  </div>
+                  // Show following users by default
+                  loadingFollowing ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
+                    </div>
+                  ) : followingUsers.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 px-4">
+                      <Users className="w-12 h-12 text-gray-400 mb-4" />
+                      <p className="text-gray-500 dark:text-gray-400 text-center">
+                        {language === 'ar' ? 'لا تتابع أي شخص بعد. ابحث عن المستخدمين لبدء محادثة' : 'You are not following anyone yet. Search for users to start a chat'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 p-4">
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 px-2">
+                        {language === 'ar' ? 'الأشخاص الذين تتابعهم' : 'People you follow'}
+                      </p>
+                      {followingUsers.map((user, index) => (
+                        <motion.div
+                          key={user.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          onClick={() => handleStartNewChat(user)}
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                        >
+                          <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {user.name}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {user.email}
+                            </p>
+                          </div>
+                          <MessageCircle className="w-5 h-5 text-gray-400" />
+                        </motion.div>
+                      ))}
+                    </div>
+                  )
                 )}
               </div>
             </motion.div>

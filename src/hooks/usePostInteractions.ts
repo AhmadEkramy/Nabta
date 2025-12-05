@@ -216,13 +216,13 @@ export const usePostManagement = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const editPost = async (postId: string, newContent: string) => {
+  const editPost = async (postId: string, newContent: string, mediaUrl?: string, mediaType?: 'image' | 'video') => {
     if (!user) return false;
 
     try {
       setLoading(true);
       setError(null);
-      await updatePost(postId, user.id, newContent);
+      await updatePost(postId, user.id, newContent, mediaUrl, mediaType);
       return true;
     } catch (err) {
       console.error('Error editing post:', err);

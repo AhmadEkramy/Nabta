@@ -182,7 +182,14 @@ export const createNotification = async (notificationData: {
     // Trigger a custom event that the notification context can listen to
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('newNotification', {
-        detail: { toUserId: notificationData.toUserId, type: notificationData.type }
+        detail: { 
+          toUserId: notificationData.toUserId, 
+          type: notificationData.type,
+          message: notificationData.message,
+          messageAr: notificationData.messageAr,
+          fromUserName: notificationData.fromUserName,
+          fromUserAvatar: notificationData.fromUserAvatar
+        }
       }));
     }
 

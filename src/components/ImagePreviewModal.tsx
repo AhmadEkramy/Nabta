@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Download, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { X, ZoomIn, ZoomOut } from 'lucide-react';
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -57,15 +57,6 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
     setIsDragging(false);
   };
 
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = `${userName || 'image'}_profile_picture.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const resetView = () => {
     setZoom(1);
     setPosition({ x: 0, y: 0 });
@@ -85,18 +76,6 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         >
           {/* Controls */}
           <div className="absolute top-4 right-4 flex items-center space-x-2 z-10">
-            {showDownload && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownload();
-                }}
-                className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
-                title={language === 'ar' ? 'تحميل الصورة' : 'Download image'}
-              >
-                <Download className="w-5 h-5" />
-              </button>
-            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();

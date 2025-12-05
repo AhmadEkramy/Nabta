@@ -1,33 +1,50 @@
 import { motion } from 'framer-motion';
-import { Send, X } from 'lucide-react';
+import { Image, Send, Video, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { isYouTubeUrl, getYouTubeEmbedUrl, extractYouTubeVideoId } from '../utils/youtube';
 
 interface CreatePostProps {
   onClose: () => void;
-  onSubmit: (content: string, circleId?: string) => void;
+  onSubmit: (content: string, circleId?: string, mediaUrl?: string, mediaType?: 'image' | 'video') => void;
 }
 
 const CreatePost: React.FC<CreatePostProps> = ({ onClose, onSubmit }) => {
   const { language } = useLanguage();
   const [content, setContent] = useState('');
-  const [selectedCircle, setSelectedCircle] = useState('');
-
-  const circles = [
-    { id: '', name: language === 'ar' ? 'النشر العام' : 'Public Post' },
-    { id: '1', name: language === 'ar' ? 'دائرة التأمل والصحة النفسية' : 'Meditation & Mental Health' },
-    { id: '2', name: language === 'ar' ? 'دائرة تعلم البرمجة' : 'Programming Learning' },
-    { id: '3', name: language === 'ar' ? 'دائرة القراءة والكتابة' : 'Reading & Writing' },
-  ];
+  const [mediaUrl, setMediaUrl] = useState('');
+  const [mediaType, setMediaType] = useState<'image' | 'video' | undefined>(undefined);
+  const [showMediaInput, setShowMediaInput] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (content.trim()) {
-      // Only pass circleId if it's not empty string
-      const circleId = selectedCircle && selectedCircle.trim() !== '' ? selectedCircle : undefined;
-      onSubmit(content, circleId);
+    if (content.trim() || mediaUrl.trim()) {
+      // Always post as public (no circleId)
+      onSubmit(content, undefined, mediaUrl.trim() || undefined, mediaType);
       setContent('');
-      setSelectedCircle('');
+      setMediaUrl('');
+      setMediaType(undefined);
+      setShowMediaInput(false);
+    }
+  };
+
+  const handleMediaTypeSelect = (type: 'image' | 'video') => {
+    setMediaType(type);
+    setShowMediaInput(true);
+  };
+
+  const isValidUrl = (url: string): boolean => {
+    if (!url.trim()) return false;
+    // Check if it's a YouTube URL (special handling)
+    if (isYouTubeUrl(url)) {
+      return extractYouTubeVideoId(url) !== null;
+    }
+    // For other URLs, validate normally
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
     }
   };
 
@@ -54,23 +71,6 @@ const CreatePost: React.FC<CreatePostProps> = ({ onClose, onSubmit }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {language === 'ar' ? 'اختر الدائرة' : 'Select Circle'}
-            </label>
-            <select
-              value={selectedCircle}
-              onChange={(e) => setSelectedCircle(e.target.value)}
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
-            >
-              {circles.map((circle) => (
-                <option key={circle.id} value={circle.id}>
-                  {circle.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {language === 'ar' ? 'المحتوى' : 'Content'}
             </label>
             <textarea
@@ -79,9 +79,114 @@ const CreatePost: React.FC<CreatePostProps> = ({ onClose, onSubmit }) => {
               placeholder={language === 'ar' ? 'شارك إنجازاتك وأهدافك...' : 'Share your achievements and goals...'}
               className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white resize-none"
               rows={4}
-              required
             />
           </div>
+
+          {/* Media Options */}
+          <div className="flex items-center gap-2 mb-2">
+            <button
+              type="button"
+              onClick={() => handleMediaTypeSelect('image')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                mediaType === 'image'
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              <Image className="w-4 h-4" />
+              <span>{language === 'ar' ? 'إضافة صورة' : 'Add Image'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleMediaTypeSelect('video')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                mediaType === 'video'
+                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              <Video className="w-4 h-4" />
+              <span>{language === 'ar' ? 'إضافة فيديو' : 'Add Video'}</span>
+            </button>
+            {mediaType && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMediaType(undefined);
+                  setMediaUrl('');
+                  setShowMediaInput(false);
+                }}
+                className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              >
+                {language === 'ar' ? 'إزالة' : 'Remove'}
+              </button>
+            )}
+          </div>
+
+          {/* Media URL Input */}
+          {showMediaInput && mediaType && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {mediaType === 'image'
+                  ? (language === 'ar' ? 'رابط الصورة' : 'Image URL')
+                  : (language === 'ar' ? 'رابط الفيديو' : 'Video URL')}
+              </label>
+              <input
+                type="url"
+                value={mediaUrl}
+                onChange={(e) => setMediaUrl(e.target.value)}
+                placeholder={
+                  mediaType === 'image'
+                    ? (language === 'ar' ? 'https://example.com/image.jpg' : 'https://example.com/image.jpg')
+                    : (language === 'ar' ? 'https://example.com/video.mp4' : 'https://example.com/video.mp4')
+                }
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+              />
+              {mediaUrl && !isValidUrl(mediaUrl) && (
+                <p className="mt-1 text-sm text-red-500">
+                  {language === 'ar' ? 'الرجاء إدخال رابط صحيح' : 'Please enter a valid URL'}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Media Preview */}
+          {mediaUrl && mediaType && isValidUrl(mediaUrl) && (
+            <div className="rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+              {mediaType === 'image' ? (
+                <img
+                  src={mediaUrl}
+                  alt="Preview"
+                  className="w-full max-h-64 object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'https://via.placeholder.com/400x200?text=Image+Not+Found';
+                  }}
+                />
+              ) : isYouTubeUrl(mediaUrl) ? (
+                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                  <iframe
+                    src={getYouTubeEmbedUrl(mediaUrl) || mediaUrl}
+                    className="absolute top-0 left-0 w-full h-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="YouTube video player"
+                  />
+                </div>
+              ) : (
+                <video
+                  src={mediaUrl}
+                  className="w-full max-h-64 object-cover"
+                  controls
+                  onError={(e) => {
+                    const target = e.target as HTMLVideoElement;
+                    target.poster = 'https://via.placeholder.com/400x200?text=Video+Not+Found';
+                  }}
+                />
+              )}
+            </div>
+          )}
 
           <div className="flex items-center justify-end space-x-3">
             <button
@@ -93,7 +198,8 @@ const CreatePost: React.FC<CreatePostProps> = ({ onClose, onSubmit }) => {
             </button>
             <button
               type="submit"
-              className="flex items-center space-x-2 px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+              disabled={!content.trim() && !mediaUrl.trim()}
+              className="flex items-center space-x-2 px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-4 h-4" />
               <span>{language === 'ar' ? 'نشر' : 'Post'}</span>

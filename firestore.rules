@@ -10,12 +10,20 @@ service cloud.firestore {
     // Posts rules
     match /posts/{postId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Posts in circles use 'authorId', regular posts use 'userId'
+      allow create: if request.auth != null && (
+        request.auth.uid == resource.data.userId || 
+        request.auth.uid == resource.data.authorId
+      );
       allow update: if request.auth != null && (
         request.auth.uid == resource.data.userId || // Post owner can update
+        request.auth.uid == resource.data.authorId || // Circle post owner can update
         request.auth.uid in resource.data.likedBy // Users can like/unlike
       );
-      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.userId || 
+        request.auth.uid == resource.data.authorId
+      );
       
       // Comments subcollection
       match /comments/{commentId} {

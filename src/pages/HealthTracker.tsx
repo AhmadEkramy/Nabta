@@ -8,10 +8,19 @@ import {
     Moon,
     Stethoscope
 } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { getDailyActivityLog } from '../firebase/activity';
+import { getDailyBloodSugarLog } from '../firebase/bloodSugar';
+import { getDailyBloodPressureLog } from '../firebase/bloodPressure';
+import { getDailyHeartRateLog } from '../firebase/heartRate';
+import { getDailyNutritionLog, getNutritionGoals } from '../firebase/nutrition';
+import { getDailySleepLog } from '../firebase/sleep';
+import { getDailyStepsLog } from '../firebase/steps';
+import { getDailyWaterLog } from '../firebase/water';
 
 interface HealthMetric {
   current: number | string;
@@ -99,6 +108,129 @@ const HealthCard: React.FC<HealthCardProps> = ({ title, description, icon: Icon,
 
 const HealthTracker: React.FC = () => {
   const { isDark } = useTheme();
+  const { user, loading: authLoading } = useAuth();
+  const [healthData, setHealthData] = useState<{
+    nutrition: { current: number; goal: number };
+    water: { current: number; goal: number };
+    activity: { current: number; goal: number };
+    sleep: { current: number; goal: number };
+    steps: { current: number; goal: number };
+    heartRate: number;
+    bloodSugar: number;
+    bloodPressure: string;
+  }>({
+    nutrition: { current: 0, goal: 2000 },
+    water: { current: 0, goal: 2500 },
+    activity: { current: 0, goal: 60 },
+    sleep: { current: 0, goal: 8 },
+    steps: { current: 0, goal: 10000 },
+    heartRate: 0,
+    bloodSugar: 0,
+    bloodPressure: '0/0'
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch all health data
+  useEffect(() => {
+    const fetchHealthData = async () => {
+      if (authLoading || !user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const userId = user.id;
+
+        // Fetch all data in parallel
+        const [
+          nutritionLog,
+          nutritionGoals,
+          waterLog,
+          activityLog,
+          sleepLog,
+          stepsLog,
+          heartRateLog,
+          bloodSugarLog,
+          bloodPressureLog
+        ] = await Promise.all([
+          getDailyNutritionLog(userId, today),
+          getNutritionGoals(userId),
+          getDailyWaterLog(userId, today),
+          getDailyActivityLog(userId, today),
+          getDailySleepLog(userId, today),
+          getDailyStepsLog(userId, today),
+          getDailyHeartRateLog(userId, today),
+          getDailyBloodSugarLog(userId, today),
+          getDailyBloodPressureLog(userId, today)
+        ]);
+
+        // Calculate nutrition
+        const nutritionCurrent = nutritionLog?.totalNutrition?.calories || 0;
+        const nutritionGoal = nutritionGoals?.calories || 2000;
+
+        // Calculate water (convert ml to L)
+        const waterCurrent = waterLog?.entries?.reduce((sum, e) => sum + e.amount, 0) || 0;
+        const waterGoal = (waterLog?.dailyGoal || 2500) / 1000; // Convert ml to L
+        const waterCurrentL = waterCurrent / 1000;
+
+        // Calculate activity (sum of all sessions in minutes)
+        const activityCurrent = activityLog?.sessions?.reduce((sum, s) => sum + (s.durationSec || 0), 0) || 0;
+        const activityCurrentMin = Math.round(activityCurrent / 60);
+        const activityGoal = 60;
+
+        // Calculate sleep (latest session or average)
+        const sleepSessions = sleepLog?.sessions || [];
+        const sleepCurrent = sleepSessions.length > 0 
+          ? sleepSessions[0].durationH 
+          : (sleepSessions.reduce((sum, s) => sum + s.durationH, 0) / sleepSessions.length || 0);
+        const sleepGoal = 8;
+
+        // Steps
+        const stepsCurrent = stepsLog?.total || 0;
+        const stepsGoal = 10000;
+
+        // Heart rate (latest entry)
+        const heartRate = heartRateLog?.latest || 0;
+
+        // Blood sugar (latest entry)
+        const bloodSugarEntries = bloodSugarLog?.entries || [];
+        const bloodSugar = bloodSugarEntries.length > 0 
+          ? bloodSugarEntries[0].value 
+          : 0;
+
+        // Blood pressure (latest entry)
+        const bloodPressureEntries = bloodPressureLog?.entries || [];
+        const bloodPressure = bloodPressureEntries.length > 0
+          ? `${bloodPressureEntries[0].sys}/${bloodPressureEntries[0].dia}`
+          : '0/0';
+
+        setHealthData({
+          nutrition: { current: nutritionCurrent, goal: nutritionGoal },
+          water: { current: waterCurrentL, goal: waterGoal },
+          activity: { current: activityCurrentMin, goal: activityGoal },
+          sleep: { current: sleepCurrent, goal: sleepGoal },
+          steps: { current: stepsCurrent, goal: stepsGoal },
+          heartRate,
+          bloodSugar,
+          bloodPressure
+        });
+      } catch (error) {
+        console.error('Error fetching health data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHealthData();
+  }, [user, authLoading]);
+
+  const formatNumber = (num: number, decimals: number = 0): string => {
+    if (decimals === 0) {
+      return Math.round(num).toLocaleString();
+    }
+    return num.toFixed(decimals);
+  };
 
   const healthCards: HealthCardProps[] = [
     {
@@ -110,7 +242,11 @@ const HealthTracker: React.FC = () => {
         accent: "text-emerald-500",
         glow: "bg-emerald-500/30"
       },
-      metric: { current: "1,800", goal: "2,200", unit: "kcal" },
+      metric: { 
+        current: loading ? "0" : formatNumber(healthData.nutrition.current), 
+        goal: formatNumber(healthData.nutrition.goal), 
+        unit: "kcal" 
+      },
       route: "/health/nutrition"
     },
     {
@@ -122,7 +258,11 @@ const HealthTracker: React.FC = () => {
         accent: "text-blue-500",
         glow: "bg-blue-500/30"
       },
-      metric: { current: "1.8", goal: "2.5", unit: "L" },
+      metric: { 
+        current: loading ? "0" : formatNumber(healthData.water.current, 1), 
+        goal: formatNumber(healthData.water.goal, 1), 
+        unit: "L" 
+      },
       route: "/health/water"
     },
     {
@@ -134,7 +274,11 @@ const HealthTracker: React.FC = () => {
         accent: "text-purple-500",
         glow: "bg-purple-500/30"
       },
-      metric: { current: "45", goal: "60", unit: "min" },
+      metric: { 
+        current: loading ? "0" : formatNumber(healthData.activity.current), 
+        goal: formatNumber(healthData.activity.goal), 
+        unit: "min" 
+      },
       route: "/health/activity"
     },
     {
@@ -146,7 +290,11 @@ const HealthTracker: React.FC = () => {
         accent: "text-indigo-500",
         glow: "bg-indigo-500/30"
       },
-      metric: { current: "7", goal: "8", unit: "h" },
+      metric: { 
+        current: loading ? "0" : formatNumber(healthData.sleep.current, 1), 
+        goal: formatNumber(healthData.sleep.goal, 1), 
+        unit: "h" 
+      },
       route: "/health/sleep"
     },
     {
@@ -158,7 +306,11 @@ const HealthTracker: React.FC = () => {
         accent: "text-pink-500",
         glow: "bg-pink-500/30"
       },
-      metric: { current: "8,432", goal: "10,000", unit: "steps" },
+      metric: { 
+        current: loading ? "0" : formatNumber(healthData.steps.current), 
+        goal: formatNumber(healthData.steps.goal), 
+        unit: "steps" 
+      },
       route: "/health/steps"
     },
     {
@@ -170,7 +322,10 @@ const HealthTracker: React.FC = () => {
         accent: "text-red-500",
         glow: "bg-red-500/30"
       },
-      metric: { current: "72", unit: "BPM" },
+      metric: { 
+        current: loading ? "0" : (healthData.heartRate > 0 ? formatNumber(healthData.heartRate) : "0"), 
+        unit: "BPM" 
+      },
       route: "/health/heart-rate"
     },
     {
@@ -182,7 +337,10 @@ const HealthTracker: React.FC = () => {
         accent: "text-amber-500",
         glow: "bg-amber-500/30"
       },
-      metric: { current: "95", unit: "mg/dL" },
+      metric: { 
+        current: loading ? "0" : (healthData.bloodSugar > 0 ? formatNumber(healthData.bloodSugar) : "0"), 
+        unit: "mg/dL" 
+      },
       route: "/health/blood-sugar"
     },
     {
@@ -194,7 +352,10 @@ const HealthTracker: React.FC = () => {
         accent: "text-cyan-500",
         glow: "bg-cyan-500/30"
       },
-      metric: { current: "120/80", unit: "mmHg" },
+      metric: { 
+        current: loading ? "0/0" : (healthData.bloodPressure !== '0/0' ? healthData.bloodPressure : "0/0"), 
+        unit: "mmHg" 
+      },
       route: "/health/blood-pressure"
     }
   ];

@@ -332,6 +332,30 @@ const ProfilePage: React.FC = () => {
               )}
             </div>
 
+            {/* Bio */}
+            <div className="flex items-start gap-2">
+              {isLoading ? (
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-64" />
+              ) : (
+                <>
+                  <p className={`flex-1 text-gray-700 dark:text-gray-300 whitespace-pre-wrap ${!displayUser?.bio ? 'text-gray-400 dark:text-gray-500 italic' : ''}`}>
+                    {displayUser?.bio || (language === 'ar' ? 'لم يتم إضافة نبذة شخصية بعد' : 'No bio added yet')}
+                  </p>
+                  {!isLoading && (
+                    <button
+                      onClick={() => setShowEditBioModal(true)}
+                      className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors flex-shrink-0 mt-1"
+                      title={language === 'ar' ? 'تعديل النبذة الشخصية' : 'Edit Bio'}
+                    >
+                      <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+
             <div className="text-gray-600 dark:text-gray-400">
               {isLoading ? (
                 <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-64" />
@@ -1037,6 +1061,10 @@ const ProfilePage: React.FC = () => {
           onSave={async (newBio: string) => {
             try {
               await updateUserProfile(displayUser.id, { bio: newBio });
+              // Update local state immediately
+              if (profileData) {
+                setProfileData({ ...profileData, bio: newBio });
+              }
               await refreshUser();
               toast.success(language === 'ar' ? 'تم تحديث النبذة الشخصية بنجاح' : 'Bio updated successfully');
             } catch (error) {
